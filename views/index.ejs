@@ -1,0 +1,33 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <h1><%= project.name %></h1>
+        Concepts:
+        <ul>
+            <% _.each(project.concepts, function(concept) {%>
+                <li>
+                    <%= concept.getListLabel() %>
+                </li>
+            <% }); %>
+        </ul>
+
+        Instances:
+        <ul>
+            <% _.each(instances, function(instance) {%>
+                <li>
+                    <%= instance.getListLabel() %>
+                </li>
+            <% }); %>
+        </ul>
+
+        Editors for first instance:
+        <ul>
+            <% _.each(first_instance.concept.editors, function(editor) {%>
+                <li>
+                    <%- editor.drawForInstance(first_instance) %>
+                </li>
+            <% }); %>
+        </ul>
+    </body>
+</html>
