@@ -14,7 +14,7 @@ app.configure(function () {
     app.set('view engine', 'ejs');
     app.use(express.bodyParser());
     app.use(express.methodOverride());
-    app.use(express.static(__dirname + '/public'));
+    app.use(express.static(__dirname + '/static'));
 });
 app.configure('development', function () {
     app.use(express.errorHandler({
@@ -188,7 +188,6 @@ project.actions = [
                 res.send(instance.get('body'));
             });
         });
-        console.log("here");
         project_app.listen(1234, function () {
             console.log("Listening on port 1234!");
         });

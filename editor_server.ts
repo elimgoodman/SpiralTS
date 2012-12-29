@@ -16,7 +16,7 @@ app.configure(function(){
  app.set('view engine', 'ejs');
  app.use(express.bodyParser());
  app.use(express.methodOverride());
- app.use(express.static(__dirname + '/public'));
+ app.use(express.static(__dirname + '/static'));
 });
 
 app.configure('development', function(){
@@ -149,7 +149,7 @@ project.actions = [
     })
 ];
 
-project.executeAction('run');
+//project.executeAction('run');
 
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {

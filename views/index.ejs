@@ -1,33 +1,26 @@
+<!DOCTYPE html>
 <html>
     <head>
+        <title>Spiral</title>
+        <link rel="stylesheet" type="text/css" href="/css/reset.css">
+        <link rel="stylesheet" type="text/css" href="/css/index.css">
+        <script type="text/javascript" src="/js/jquery.js"></script>
+        <script type="text/javascript" src="/js/underscore.js"></script>
+        <script type="text/javascript" src="/js/backbone.js"></script>
+        <script type="text/javascript" src="/js/index.js"></script>
     </head>
     <body>
-        <h1><%= project.name %></h1>
-        Concepts:
-        <ul>
-            <% _.each(project.concepts, function(concept) {%>
-                <li>
-                    <%= concept.getListLabel() %>
-                </li>
-            <% }); %>
-        </ul>
-
-        Instances:
-        <ul>
-            <% _.each(instances, function(instance) {%>
-                <li>
-                    <%= instance.getListLabel() %>
-                </li>
-            <% }); %>
-        </ul>
-
-        Editors for first instance:
-        <ul>
-            <% _.each(first_instance.concept.editors, function(editor) {%>
-                <li>
-                    <%- editor.drawForInstance(first_instance) %>
-                </li>
-            <% }); %>
-        </ul>
+        <div id="top-bar">
+            <span><%= project.name %></span>
+        </div>
+        <div id="content">
+            <ul id="concept-list">
+                <% _.each(project.concepts, function(concept) {%>
+                    <li>
+                        <%= concept.getListLabel() %>
+                    </li>
+                <% }); %>
+            </ul>
+        </div>
     </body>
 </html>

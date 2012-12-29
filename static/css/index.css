@@ -1,0 +1,25 @@
+body {
+    font-family: Helvetica Neue;
+}
+
+#top-bar {
+    /*position: fixed;*/
+    top: 0;
+    /*width: 100%;*/
+    left: 0;
+    padding: 12px;
+    color: white;
+    background: black;
+    font-weight: bold;
+}
+
+#concept-list > li {
+    cursor: pointer;
+}
+
+#concept-list {
+    border-right: 1px solid #999;
+    border-bottom: 1px solid #999;
+    float: left;
+    padding: 18px;
+}
