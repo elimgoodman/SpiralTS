@@ -23,6 +23,7 @@ var Spiral;
         }
     });
     var CurrentConcept = new SelectionKeeper();
+    var CurrentInstance = new SelectionKeeper();
     var AppView = (function (_super) {
         __extends(AppView, _super);
         function AppView() {
@@ -88,6 +89,14 @@ var Spiral;
         }
         return Concept;
     })(Backbone.Model);    
+    var Instance = (function (_super) {
+        __extends(Instance, _super);
+        function Instance() {
+            _super.apply(this, arguments);
+
+        }
+        return Instance;
+    })(Backbone.Model);    
     var ConceptCollection = (function (_super) {
         __extends(ConceptCollection, _super);
         function ConceptCollection() {
@@ -100,13 +109,22 @@ var Spiral;
         };
         return ConceptCollection;
     })(Backbone.Collection);    
+    var InstanceCollection = (function (_super) {
+        __extends(InstanceCollection, _super);
+        function InstanceCollection() {
+            _super.apply(this, arguments);
+
+            this.model = Instance;
+        }
+        return InstanceCollection;
+    })(Backbone.Collection);    
     var Concepts = new ConceptCollection();
+    var Instances = new InstanceCollection();
     var ConceptListView = (function (_super) {
         __extends(ConceptListView, _super);
         function ConceptListView() {
             _super.apply(this, arguments);
 
-            this.isSelected = false;
         }
         ConceptListView.prototype.tagName = function () {
             return "li";
@@ -125,6 +143,30 @@ var Spiral;
             this.setSelectedClass();
         };
         return ConceptListView;
+    })(MView);    
+    var InstanceListView = (function (_super) {
+        __extends(InstanceListView, _super);
+        function InstanceListView() {
+            _super.apply(this, arguments);
+
+        }
+        InstanceListView.prototype.tagName = function () {
+            return "li";
+        };
+        InstanceListView.prototype.className = function () {
+            return "instance-li";
+        };
+        InstanceListView.prototype.getTemplateSelector = function () {
+            return "#instance-list-view";
+        };
+        InstanceListView.prototype.select = function () {
+            CurrentInstance.set(this.model);
+        };
+        InstanceListView.prototype.postRender = function () {
+            this.$el.unbind('click').click(_.bind(this.select, this));
+            this.setSelectedClass();
+        };
+        return InstanceListView;
     })(MView);    
     var ConceptList = (function (_super) {
         __extends(ConceptList, _super);
@@ -151,7 +193,33 @@ var Spiral;
         };
         return ConceptList;
     })(AppView);    
+    var InstanceList = (function (_super) {
+        __extends(InstanceList, _super);
+        function InstanceList() {
+            _super.apply(this, arguments);
+
+        }
+        InstanceList.prototype.initialize = function () {
+            _super.prototype.initialize.call(this);
+            Instances.bind('reset', this.render, this);
+        };
+        InstanceList.prototype.getElSelector = function () {
+            return "#instance-list";
+        };
+        InstanceList.prototype.render = function () {
+            this.$el.empty();
+            var self = this;
+            Instances.each(function (m) {
+                var v = new InstanceListView({
+                    model: m
+                });
+                self.$el.append(v.render().el);
+            });
+        };
+        return InstanceList;
+    })(AppView);    
     var TheConceptList = new ConceptList();
+    var TheInstanceList = new InstanceList();
     Concepts.fetch();
 })(Spiral || (Spiral = {}));
 

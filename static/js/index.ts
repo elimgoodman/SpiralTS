@@ -23,6 +23,7 @@ module Spiral {
     });
     
     var CurrentConcept = new SelectionKeeper();
+    var CurrentInstance = new SelectionKeeper();
 
     class AppView extends Backbone.View {
         getElSelector() {
@@ -71,6 +72,7 @@ module Spiral {
     }
     
     class Concept extends Backbone.Model {}
+    class Instance extends Backbone.Model {}
 
     class ConceptCollection extends Backbone.Collection {
         url() {
@@ -80,11 +82,14 @@ module Spiral {
         public model = Concept;
     }
 
+    class InstanceCollection extends Backbone.Collection {
+        public model = Instance;
+    }
+
     var Concepts = new ConceptCollection();
+    var Instances = new InstanceCollection();
 
     class ConceptListView extends MView {
-        isSelected = false;
-
         tagName() {return "li"};
         className() {return "concept-li"};
         
@@ -101,7 +106,25 @@ module Spiral {
             this.$el.unbind('click').click(_.bind(this.select, this));
             this.setSelectedClass();
         }
+    }
 
+    class InstanceListView extends MView {
+        tagName() {return "li"};
+        className() {return "instance-li"};
+        
+    
+        getTemplateSelector() {
+            return "#instance-list-view";
+        }
+
+        select() {
+            CurrentInstance.set(this.model);
+        }
+
+        postRender() {
+            this.$el.unbind('click').click(_.bind(this.select, this));
+            this.setSelectedClass();
+        }
     }
 
     class ConceptList extends AppView {
@@ -125,7 +148,29 @@ module Spiral {
         }
     }
 
+    class InstanceList extends AppView {
+        initialize() {
+            super.initialize();
+            Instances.bind('reset', this.render, this);
+        }
+
+        getElSelector() {
+            return "#instance-list";
+        }
+        
+        render() {
+            this.$el.empty();
+
+            var self = this;
+            Instances.each(function(m){
+                var v = new InstanceListView({model: m});
+                self.$el.append(v.render().el);
+            });
+        }
+    }
+
     var TheConceptList = new ConceptList();
+    var TheInstanceList = new InstanceList();
 
     Concepts.fetch();
 }

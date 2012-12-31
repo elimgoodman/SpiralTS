@@ -18,17 +18,18 @@ body {
     padding: 12px;
     border-bottom: 1px solid #999;
     background: white;
+    text-align: center;
+    font-size: 14px;
 }
 
 .concept-li.selected {
     background: black;
     font-weight: bold;
     color: white;
+    border-color: black;
 }
 
 #concept-list {
     border-right: 1px solid #999;
-    /*border-bottom: 1px solid #999;*/
     float: left;
-    /*padding: 18px;*/
 }
