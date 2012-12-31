@@ -20,6 +20,9 @@ var Spiral;
                 selected: true
             });
             this.trigger('change');
+        },
+        get: function () {
+            return this.selected;
         }
     });
     var CurrentConcept = new SelectionKeeper();
@@ -97,6 +100,14 @@ var Spiral;
         }
         return Instance;
     })(Backbone.Model);    
+    var Editor = (function (_super) {
+        __extends(Editor, _super);
+        function Editor() {
+            _super.apply(this, arguments);
+
+        }
+        return Editor;
+    })(Backbone.Model);    
     var ConceptCollection = (function (_super) {
         __extends(ConceptCollection, _super);
         function ConceptCollection() {
@@ -116,10 +127,36 @@ var Spiral;
 
             this.model = Instance;
         }
+        InstanceCollection.prototype.initialize = function () {
+            CurrentConcept.bind('change', this.fetch, this);
+        };
+        InstanceCollection.prototype.url = function () {
+            var concept = CurrentConcept.get();
+            var name = concept.get('name');
+            return "/concepts/" + name + "/instances";
+        };
         return InstanceCollection;
+    })(Backbone.Collection);    
+    var EditorCollection = (function (_super) {
+        __extends(EditorCollection, _super);
+        function EditorCollection() {
+            _super.apply(this, arguments);
+
+            this.model = Editor;
+        }
+        EditorCollection.prototype.initialize = function () {
+            CurrentInstance.bind('change', this.fetch, this);
+        };
+        EditorCollection.prototype.url = function () {
+            var concept = CurrentConcept.get().get('name');
+            var instance_id = CurrentInstance.get().get('unique_id');
+            return "/concepts/" + concept + "/" + encodeURIComponent(instance_id) + "/editors";
+        };
+        return EditorCollection;
     })(Backbone.Collection);    
     var Concepts = new ConceptCollection();
     var Instances = new InstanceCollection();
+    var Editors = new EditorCollection();
     var ConceptListView = (function (_super) {
         __extends(ConceptListView, _super);
         function ConceptListView() {
@@ -167,6 +204,23 @@ var Spiral;
             this.setSelectedClass();
         };
         return InstanceListView;
+    })(MView);    
+    var EditorListView = (function (_super) {
+        __extends(EditorListView, _super);
+        function EditorListView() {
+            _super.apply(this, arguments);
+
+        }
+        EditorListView.prototype.tagName = function () {
+            return "li";
+        };
+        EditorListView.prototype.className = function () {
+            return "editor-li";
+        };
+        EditorListView.prototype.getTemplateSelector = function () {
+            return "#editor-list-view";
+        };
+        return EditorListView;
     })(MView);    
     var ConceptList = (function (_super) {
         __extends(ConceptList, _super);
@@ -218,8 +272,34 @@ var Spiral;
         };
         return InstanceList;
     })(AppView);    
+    var EditorsList = (function (_super) {
+        __extends(EditorsList, _super);
+        function EditorsList() {
+            _super.apply(this, arguments);
+
+        }
+        EditorsList.prototype.initialize = function () {
+            _super.prototype.initialize.call(this);
+            Editors.bind('reset', this.render, this);
+        };
+        EditorsList.prototype.getElSelector = function () {
+            return "#editors";
+        };
+        EditorsList.prototype.render = function () {
+            this.$el.empty();
+            var self = this;
+            Editors.each(function (m) {
+                var v = new EditorListView({
+                    model: m
+                });
+                self.$el.append(v.render().el);
+            });
+        };
+        return EditorsList;
+    })(AppView);    
     var TheConceptList = new ConceptList();
     var TheInstanceList = new InstanceList();
+    var TheEditors = new EditorsList();
     Concepts.fetch();
 })(Spiral || (Spiral = {}));
 

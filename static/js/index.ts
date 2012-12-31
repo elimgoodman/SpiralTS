@@ -19,6 +19,10 @@ module Spiral {
             this.selected.set({selected: true});
 
             this.trigger('change');
+        },
+
+        get: function(): Backbone.Model {
+            return this.selected;
         }
     });
     
@@ -73,6 +77,7 @@ module Spiral {
     
     class Concept extends Backbone.Model {}
     class Instance extends Backbone.Model {}
+    class Editor extends Backbone.Model {}
 
     class ConceptCollection extends Backbone.Collection {
         url() {
@@ -84,10 +89,32 @@ module Spiral {
 
     class InstanceCollection extends Backbone.Collection {
         public model = Instance;
+        initialize() {
+            CurrentConcept.bind('change', this.fetch, this);
+        }
+        url() {
+            var concept = CurrentConcept.get();
+            var name = concept.get('name');
+            return "/concepts/" + name + "/instances";
+        }
+    }
+
+    class EditorCollection extends Backbone.Collection {
+        public model = Editor;
+        initialize() {
+            CurrentInstance.bind('change', this.fetch, this);
+        }
+        url() {
+            var concept = CurrentConcept.get().get('name');
+            var instance_id = CurrentInstance.get().get('unique_id');
+
+            return "/concepts/" + concept + "/" + encodeURIComponent(instance_id) + "/editors";
+        }
     }
 
     var Concepts = new ConceptCollection();
     var Instances = new InstanceCollection();
+    var Editors = new EditorCollection();
 
     class ConceptListView extends MView {
         tagName() {return "li"};
@@ -126,6 +153,17 @@ module Spiral {
             this.setSelectedClass();
         }
     }
+
+    class EditorListView extends MView {
+        tagName() {return "li"};
+        className() {return "editor-li"};
+        
+    
+        getTemplateSelector() {
+            return "#editor-list-view";
+        }
+    }
+
 
     class ConceptList extends AppView {
         initialize() {
@@ -169,8 +207,30 @@ module Spiral {
         }
     }
 
+    class EditorsList extends AppView {
+        initialize() {
+            super.initialize();
+            Editors.bind('reset', this.render, this);
+        }
+
+        getElSelector() {
+            return "#editors";
+        }
+        
+        render() {
+            this.$el.empty();
+
+            var self = this;
+            Editors.each(function(m){
+                var v = new EditorListView({model: m});
+                self.$el.append(v.render().el);
+            });
+        }
+    }
+
     var TheConceptList = new ConceptList();
     var TheInstanceList = new InstanceList();
+    var TheEditors = new EditorsList();
 
     Concepts.fetch();
 }

@@ -7,6 +7,8 @@ import express = module("express")
 import _ = module("underscore")
 
 var notemplate = require('express-notemplate');
+var ejs = require('ejs');
+
 var app = express.createServer();
 
 // Configuration
@@ -27,8 +29,6 @@ app.configure('production', function(){
  app.use(express.errorHandler());
 });
 
-
-
 module Fields {
     export class Field {
         constructor(public name:string){}
@@ -44,6 +44,12 @@ module Editors {
         constructor(public display_text: string, public value_fn: (instance: Concepts.ConceptInstance) => any) {}
         getTemplate(): string {
             return "none";
+        }
+        renderEditor(instance: Concepts.ConceptInstance) {
+            var template = this.getTemplate();
+            return ejs.compile(template)({
+                value: this.value_fn(instance)
+            });
         }
     }
 
@@ -91,7 +97,7 @@ module Concepts {
         "Page", 
         [new Editors.URL("The URL", function(page_instance: Concepts.ConceptInstance){
             return page_instance.get("url");
-        }), new Editors.HTML("The body:", function(page_instance: Concepts.ConceptInstance){
+        }), new Editors.HTML("The body", function(page_instance: Concepts.ConceptInstance){
             return page_instance.get("body");
         })], 
         [new Fields.URL("url"), new Fields.HTML("body")],
@@ -101,9 +107,9 @@ module Concepts {
     export var Partial = new Concept(
         "partial", 
         "Partial", 
-        [new Editors.Name("Name:", function(partial_instance: Concepts.ConceptInstance){
+        [new Editors.Name("Name", function(partial_instance: Concepts.ConceptInstance){
             return partial_instance.get("name");
-        }), new Editors.HTML("The body:", function(partial_instance: Concepts.ConceptInstance){
+        }), new Editors.HTML("The body", function(partial_instance: Concepts.ConceptInstance){
             return partial_instance.get("body");
         })], 
         [new Fields.HTML("name"), new Fields.HTML("body")],
@@ -111,7 +117,11 @@ module Concepts {
     );
 
     export class ConceptInstance implements Listable {
-        constructor(public concept: Concept, private values: any){}
+        public unique_id:string;
+
+        constructor(public concept: Concept, private values: any){
+            this.unique_id = this.getListLabel();
+        }
 
         get(field: string) : any {
             return this.values[field];
@@ -137,14 +147,41 @@ class Project {
 
         action.body();
     }
+    getConcept(name:string) {
+        return _.find(this.concepts, function(concept){
+            return concept.name == name;
+        });
+    }
 }
 
 var project = new Project("My Project", [Concepts.Page, Concepts.Partial]);
 
-var page_instances = [new Concepts.ConceptInstance(Concepts.Page, {
+var page_instances = [
+new Concepts.ConceptInstance(Concepts.Page, {
     url: "/foo/bar",
     body: "<h1>Hello world!</h1>"
-})];
+}),
+new Concepts.ConceptInstance(Concepts.Page, {
+    url: "/foo/baz",
+    body: "<h1>Goodbye world!</h1>"
+})    
+];
+
+var partial_instances = [
+new Concepts.ConceptInstance(Concepts.Partial, {
+    name: "button",
+    body: "<span class='button'>Click me</span>"
+}),
+new Concepts.ConceptInstance(Concepts.Partial, {
+    name: "badge",
+    body: "<span class='badge'>Pin me</span>"
+})
+];
+
+var instances = {
+    page: page_instances,
+    partial: partial_instances
+};
 
 var first_instance = page_instances[0];
 
@@ -167,16 +204,35 @@ project.actions = [
 
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
-    res.render('index', {
-        project: project, 
-        instances: page_instances,
-        first_instance: first_instance,
-        _: _
-    });
+    res.render('index', {});
 });
 
 app.get('/concepts', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     res.json(project.concepts);
+});
+
+app.get('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var name = req.params.name;
+    res.json(instances[name]);
+});
+
+app.get('/concepts/:name/:instance_id/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var concept_name = req.params.name;
+    var instance_id = req.params.instance_id;
+    
+    var instance = _.find(instances[concept_name], function(instance) {
+        return instance.unique_id == instance_id;
+    });
+    
+    var concept = project.getConcept(concept_name);
+    var templates = _.map(concept.editors, function(editor){
+        return {
+            body: editor.renderEditor(instance),
+            display_text: editor.display_text
+        };
+    });
+
+    res.json(templates);
 });
 
 app.listen(3000, function(){

@@ -13,7 +13,7 @@ body {
     font-weight: bold;
 }
 
-.concept-li {
+.entity-list li {
     cursor: pointer;
     padding: 12px;
     border-bottom: 1px solid #999;
@@ -22,14 +22,26 @@ body {
     font-size: 14px;
 }
 
-.concept-li.selected {
+.entity-list li.selected {
     background: black;
     font-weight: bold;
     color: white;
     border-color: black;
 }
 
-#concept-list {
+.entity-list {
     border-right: 1px solid #999;
     float: left;
 }
+
+#editors {
+    float: left;
+    width: 800px;
+    list-style: none;
+    border-right: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+
+#editors li {
+    padding: 12px;
+    border-bottom: 1px solid #ccc;

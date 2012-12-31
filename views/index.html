@@ -13,13 +13,22 @@
             <span>Project Name</span>
         </div>
         <div id="content">
-            <ul id="concept-list"></ul>
-            <ul id="instance-list"></ul>
+            <ul class="entity-list" id="concept-list"></ul>
+            <ul class="entity-list" id="instance-list"></ul>
+            <div id="editors"></div>
         </div>
     </body>
     
     <script type="text/html" id="concept-list-view">
         <%= display_name %>
+    </script>
+
+    <script type="text/html" id="instance-list-view">
+        <%= unique_id %>
+    </script>
+
+    <script type="text/html" id="editor-list-view">
+        <%= display_text %>: <%= body %>
     </script>
 
     <script type="text/javascript" src="/js/index.js"></script>

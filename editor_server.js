@@ -8,6 +8,7 @@ var __extends = this.__extends || function (d, b) {
 var express = require("express")
 var _ = require("underscore")
 var notemplate = require('express-notemplate');
+var ejs = require('ejs');
 var app = express.createServer();
 app.configure(function () {
     app.set('views', __dirname + '/views');
@@ -74,6 +75,12 @@ var Editors;
         Editor.prototype.getTemplate = function () {
             return "none";
         };
+        Editor.prototype.renderEditor = function (instance) {
+            var template = this.getTemplate();
+            return ejs.compile(template)({
+                value: this.value_fn(instance)
+            });
+        };
         return Editor;
     })();
     Editors.Editor = Editor;    
@@ -135,7 +142,7 @@ var Concepts;
         new Editors.URL("The URL", function (page_instance) {
             return page_instance.get("url");
         }), 
-        new Editors.HTML("The body:", function (page_instance) {
+        new Editors.HTML("The body", function (page_instance) {
             return page_instance.get("body");
         })
     ], [
@@ -143,10 +150,10 @@ var Concepts;
         new Fields.HTML("body")
     ], "url");
     Concepts.Partial = new Concept("partial", "Partial", [
-        new Editors.Name("Name:", function (partial_instance) {
+        new Editors.Name("Name", function (partial_instance) {
             return partial_instance.get("name");
         }), 
-        new Editors.HTML("The body:", function (partial_instance) {
+        new Editors.HTML("The body", function (partial_instance) {
             return partial_instance.get("body");
         })
     ], [
@@ -157,6 +164,7 @@ var Concepts;
         function ConceptInstance(concept, values) {
             this.concept = concept;
             this.values = values;
+            this.unique_id = this.getListLabel();
         }
         ConceptInstance.prototype.get = function (field) {
             return this.values[field];
@@ -187,6 +195,11 @@ var Project = (function () {
         });
         action.body();
     };
+    Project.prototype.getConcept = function (name) {
+        return _.find(this.concepts, function (concept) {
+            return concept.name == name;
+        });
+    };
     return Project;
 })();
 var project = new Project("My Project", [
@@ -197,8 +210,26 @@ var page_instances = [
     new Concepts.ConceptInstance(Concepts.Page, {
         url: "/foo/bar",
         body: "<h1>Hello world!</h1>"
+    }), 
+    new Concepts.ConceptInstance(Concepts.Page, {
+        url: "/foo/baz",
+        body: "<h1>Goodbye world!</h1>"
     })
 ];
+var partial_instances = [
+    new Concepts.ConceptInstance(Concepts.Partial, {
+        name: "button",
+        body: "<span class='button'>Click me</span>"
+    }), 
+    new Concepts.ConceptInstance(Concepts.Partial, {
+        name: "badge",
+        body: "<span class='badge'>Pin me</span>"
+    })
+];
+var instances = {
+    page: page_instances,
+    partial: partial_instances
+};
 var first_instance = page_instances[0];
 project.actions = [
     new Action("run", function () {
@@ -215,14 +246,29 @@ project.actions = [
 ];
 app.get('/', function (req, res) {
     res.render('index', {
-        project: project,
-        instances: page_instances,
-        first_instance: first_instance,
-        _: _
     });
 });
 app.get('/concepts', function (req, res) {
     res.json(project.concepts);
+});
+app.get('/concepts/:name/instances', function (req, res) {
+    var name = req.params.name;
+    res.json(instances[name]);
+});
+app.get('/concepts/:name/:instance_id/editors', function (req, res) {
+    var concept_name = req.params.name;
+    var instance_id = req.params.instance_id;
+    var instance = _.find(instances[concept_name], function (instance) {
+        return instance.unique_id == instance_id;
+    });
+    var concept = project.getConcept(concept_name);
+    var templates = _.map(concept.editors, function (editor) {
+        return {
+            body: editor.renderEditor(instance),
+            display_text: editor.display_text
+        };
+    });
+    res.json(templates);
 });
 app.listen(3000, function () {
     console.log("Listening on port %d in %s mode", 3000, app.settings.env);
