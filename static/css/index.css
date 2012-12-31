@@ -13,13 +13,22 @@ body {
     font-weight: bold;
 }
 
-#concept-list > li {
+.concept-li {
     cursor: pointer;
+    padding: 12px;
+    border-bottom: 1px solid #999;
+    background: white;
+}
+
+.concept-li.selected {
+    background: black;
+    font-weight: bold;
+    color: white;
 }
 
 #concept-list {
     border-right: 1px solid #999;
-    border-bottom: 1px solid #999;
+    /*border-bottom: 1px solid #999;*/
     float: left;
-    padding: 18px;
+    /*padding: 18px;*/
 }

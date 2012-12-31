@@ -6,14 +6,14 @@ import url = module("url")
 import express = module("express")
 import _ = module("underscore")
 
-var ejs = require("ejs");
-
+var notemplate = require('express-notemplate');
 var app = express.createServer();
 
 // Configuration
 app.configure(function(){
  app.set('views', __dirname + '/views');
- app.set('view engine', 'ejs');
+ app.engine('html', notemplate.__express);
+ app.set('view engine', 'html');
  app.use(express.bodyParser());
  app.use(express.methodOverride());
  app.use(express.static(__dirname + '/static'));
@@ -45,12 +45,14 @@ module Editors {
         getTemplate(): string {
             return "none";
         }
-
-        drawForInstance(instance: Concepts.ConceptInstance): string {
-            return ejs.render(this.getTemplate(), {value: this.value_fn(instance)});
-        }
     }
 
+    export class Name extends Editor {
+        getTemplate() {
+            return "<input value='<%= value %>'/>";
+        }
+    }    
+    
     export class URL extends Editor {
         getTemplate() {
             return "<input value='<%= value %>'/>";
@@ -96,6 +98,18 @@ module Concepts {
         "url"
     );
 
+    export var Partial = new Concept(
+        "partial", 
+        "Partial", 
+        [new Editors.Name("Name:", function(partial_instance: Concepts.ConceptInstance){
+            return partial_instance.get("name");
+        }), new Editors.HTML("The body:", function(partial_instance: Concepts.ConceptInstance){
+            return partial_instance.get("body");
+        })], 
+        [new Fields.HTML("name"), new Fields.HTML("body")],
+        "name"
+    );
+
     export class ConceptInstance implements Listable {
         constructor(public concept: Concept, private values: any){}
 
@@ -125,7 +139,7 @@ class Project {
     }
 }
 
-var project = new Project("My Project", [Concepts.Page]);
+var project = new Project("My Project", [Concepts.Page, Concepts.Partial]);
 
 var page_instances = [new Concepts.ConceptInstance(Concepts.Page, {
     url: "/foo/bar",
@@ -159,6 +173,10 @@ app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressSer
         first_instance: first_instance,
         _: _
     });
+});
+
+app.get('/concepts', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    res.json(project.concepts);
 });
 
 app.listen(3000, function(){

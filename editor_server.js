@@ -7,11 +7,12 @@ var __extends = this.__extends || function (d, b) {
 
 var express = require("express")
 var _ = require("underscore")
-var ejs = require("ejs");
+var notemplate = require('express-notemplate');
 var app = express.createServer();
 app.configure(function () {
     app.set('views', __dirname + '/views');
-    app.set('view engine', 'ejs');
+    app.engine('html', notemplate.__express);
+    app.set('view engine', 'html');
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.static(__dirname + '/static'));
@@ -73,14 +74,21 @@ var Editors;
         Editor.prototype.getTemplate = function () {
             return "none";
         };
-        Editor.prototype.drawForInstance = function (instance) {
-            return ejs.render(this.getTemplate(), {
-                value: this.value_fn(instance)
-            });
-        };
         return Editor;
     })();
     Editors.Editor = Editor;    
+    var Name = (function (_super) {
+        __extends(Name, _super);
+        function Name() {
+            _super.apply(this, arguments);
+
+        }
+        Name.prototype.getTemplate = function () {
+            return "<input value='<%= value %>'/>";
+        };
+        return Name;
+    })(Editor);
+    Editors.Name = Name;    
     var URL = (function (_super) {
         __extends(URL, _super);
         function URL() {
@@ -134,6 +142,17 @@ var Concepts;
         new Fields.URL("url"), 
         new Fields.HTML("body")
     ], "url");
+    Concepts.Partial = new Concept("partial", "Partial", [
+        new Editors.Name("Name:", function (partial_instance) {
+            return partial_instance.get("name");
+        }), 
+        new Editors.HTML("The body:", function (partial_instance) {
+            return partial_instance.get("body");
+        })
+    ], [
+        new Fields.HTML("name"), 
+        new Fields.HTML("body")
+    ], "name");
     var ConceptInstance = (function () {
         function ConceptInstance(concept, values) {
             this.concept = concept;
@@ -171,7 +190,8 @@ var Project = (function () {
     return Project;
 })();
 var project = new Project("My Project", [
-    Concepts.Page
+    Concepts.Page, 
+    Concepts.Partial
 ]);
 var page_instances = [
     new Concepts.ConceptInstance(Concepts.Page, {
@@ -193,7 +213,6 @@ project.actions = [
         });
     })
 ];
-project.executeAction('run');
 app.get('/', function (req, res) {
     res.render('index', {
         project: project,
@@ -201,6 +220,9 @@ app.get('/', function (req, res) {
         first_instance: first_instance,
         _: _
     });
+});
+app.get('/concepts', function (req, res) {
+    res.json(project.concepts);
 });
 app.listen(3000, function () {
     console.log("Listening on port %d in %s mode", 3000, app.settings.env);

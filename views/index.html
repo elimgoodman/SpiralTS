@@ -7,20 +7,19 @@
         <script type="text/javascript" src="/js/jquery.js"></script>
         <script type="text/javascript" src="/js/underscore.js"></script>
         <script type="text/javascript" src="/js/backbone.js"></script>
-        <script type="text/javascript" src="/js/index.js"></script>
     </head>
     <body>
         <div id="top-bar">
-            <span><%= project.name %></span>
+            <span>Project Name</span>
         </div>
         <div id="content">
-            <ul id="concept-list">
-                <% _.each(project.concepts, function(concept) {%>
-                    <li>
-                        <%= concept.getListLabel() %>
-                    </li>
-                <% }); %>
-            </ul>
+            <ul id="concept-list"></ul>
         </div>
     </body>
+    
+    <script type="text/html" id="concept-list-view">
+        <%= display_name %>
+    </script>
+
+    <script type="text/javascript" src="/js/index.js"></script>
 </html>

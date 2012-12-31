@@ -9,6 +9,7 @@ declare module Backbone {
        destroy(): void;
        bind(ev: string, f: Function, ctx?: any): void;
        toJSON(): any;
+       trigger(e:string);
    }
    export class Collection {
        constructor (models? , opts? );
@@ -26,17 +27,23 @@ declare module Backbone {
    export class View {
        constructor (options? );
        $(selector: string): any;
-       el: HTMLElement;
+       el: any;
        $el: any;
        model: Model;
        remove(): void;
        delegateEvents: any;
        make(tagName: string, attrs? , opts? ): View;
        setElement(element: HTMLElement, delegate?: bool): void;
-       tagName: string;
+       tagName(): string;
+       className(): string;
        events: any;
-
+       initialize(): void;
        static extend: any;
+   }
+   export class Events {
+        constructor (options? );
+        on(e:string, cb:(anything?) => void, context: any);
+        trigger(e:string);
    }
 }
 declare var _: any;

@@ -53,6 +53,7 @@ declare module "express" {
        use(route: string, server: ExpressServer): ExpressServer;
        use(callback: Function): ExpressServer;
        use(server: ExpressServer): ExpressServer;
+       register(type: string, options: any): void;
    }
    
    export interface ExpressServerRequest extends http.ServerRequest {
