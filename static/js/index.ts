@@ -36,7 +36,10 @@ module Spiral {
 
         initialize() {
             this.setElement($(this.getElSelector()), true);
+            this.postInit();
         }
+
+        postInit() {}
     }
 
     class MView extends Backbone.View {
@@ -78,6 +81,7 @@ module Spiral {
     class Concept extends Backbone.Model {}
     class Instance extends Backbone.Model {}
     class Editor extends Backbone.Model {}
+    class Action extends Backbone.Model {}
 
     class ConceptCollection extends Backbone.Collection {
         url() {
@@ -85,6 +89,14 @@ module Spiral {
         }
 
         public model = Concept;
+    }
+
+    class ActionCollection extends Backbone.Collection {
+        url() {
+            return "/actions";
+        }
+
+        public model = Action;
     }
 
     class InstanceCollection extends Backbone.Collection {
@@ -106,15 +118,16 @@ module Spiral {
         }
         url() {
             var concept = CurrentConcept.get().get('name');
-            var instance_id = CurrentInstance.get().get('unique_id');
+            var instance_id = CurrentInstance.get().get('id');
 
-            return "/concepts/" + concept + "/" + encodeURIComponent(instance_id) + "/editors";
+            return "/concepts/" + concept + "/instances/" + encodeURIComponent(instance_id) + "/editors";
         }
     }
 
     var Concepts = new ConceptCollection();
     var Instances = new InstanceCollection();
     var Editors = new EditorCollection();
+    var Actions = new ActionCollection();
 
     class ConceptListView extends MView {
         tagName() {return "li"};
@@ -162,8 +175,65 @@ module Spiral {
         getTemplateSelector() {
             return "#editor-list-view";
         }
+
+        getTemplateContext() {
+            var context = super.getTemplateContext();
+
+            return _.extend(context, {
+                body: this.populateTemplate()
+            });
+        }
+
+        populateTemplate() {
+            var template = this.model.get('body');
+
+            var instance = CurrentInstance.get();
+            var values = instance.get('values');
+
+            var value = values[this.model.get('value_field')];
+
+            return _.template(template)({value: value});
+        }
+
+        postRender() {
+            this.$("input,textarea").unbind('keyup').keyup(_.bind(this.recordChange, this));
+        }
+
+        recordChange(e) {
+            var new_value = $(e.target).val();
+
+            var instance = CurrentInstance.get();
+            var values = instance.get('values');
+
+            var value_field = this.model.get('value_field');
+            values[value_field] = new_value;
+
+            instance.set({values:values}, {silent:true});
+
+        }
     }
 
+    class ActionListView extends MView {
+        tagName() {return "li"};
+        className() {return "action-li"};
+        
+        getTemplateSelector() {
+            return "#action-list-view";
+        }
+
+        performAction(e) {
+            e.preventDefault();
+            var name = this.model.get('name');
+            $.post("/actions/" + name + "/perform", function(data){
+                console.log(data);
+                Actions.fetch();
+            }, "json");
+        }
+
+        postRender() {
+            this.$el.unbind('click').click(_.bind(this.performAction, this));
+        }
+    }
 
     class ConceptList extends AppView {
         initialize() {
@@ -228,9 +298,49 @@ module Spiral {
         }
     }
 
+    class ActionList extends AppView {
+        initialize() {
+            super.initialize();
+            Actions.bind('reset', this.render, this);
+        }
+
+        getElSelector() {
+            return "#actions";
+        }
+        
+        render() {
+            this.$el.empty();
+
+            var self = this;
+            Actions.each(function(m){
+                var v = new ActionListView({model: m});
+                self.$el.append(v.render().el);
+            });
+        }
+    }
+
+    class SaveLink extends AppView {
+
+        getElSelector() {
+            return "#save-link";
+        }
+
+        postInit() {
+            this.$el.click(_.bind(this.save, this));
+        }
+
+        save() {
+            var instance = CurrentInstance.get();
+            instance.save();
+        }
+    }
+
     var TheConceptList = new ConceptList();
     var TheInstanceList = new InstanceList();
     var TheEditors = new EditorsList();
+    var TheActionList = new ActionList();
+    var TheSaveLink = new SaveLink();
 
     Concepts.fetch();
+    Actions.fetch();
 }

@@ -3,14 +3,17 @@ body {
 }
 
 #top-bar {
-    /*position: fixed;*/
     top: 0;
-    /*width: 100%;*/
     left: 0;
     padding: 12px;
     color: white;
     background: black;
+}
+
+#project-name {
     font-weight: bold;
+    padding: 0 6px;
+    border-right: 1px solid white;
 }
 
 .entity-list li {
@@ -36,7 +39,7 @@ body {
 
 #editors {
     float: left;
-    width: 800px;
+    width: 400px;
     list-style: none;
     border-right: 1px solid #ccc;
     border-left: 1px solid #ccc;
@@ -45,3 +48,20 @@ body {
 #editors li {
     padding: 12px;
     border-bottom: 1px solid #ccc;
+}
+
+#actions {
+    display: inline;
+    padding: 0 6px;
+    border-right: 1px solid white;
+    margin-right: 6px;
+}
+
+#actions > li {
+    display: inline;
+}
+
+#top-bar a {
+    color: white;
+    /*float: right;*/
+}

@@ -39,6 +39,9 @@ declare module "express" {
        post(path: string, handler: (req: ExpressServerRequest, res: ExpressServerResponse) => void ): void;
        post(path: RegExp, handler: (req: ExpressServerRequest, res: ExpressServerResponse) => void ): void;
        post(path: string, callbacks: any, callback: () => void ): void;
+       put(path: string, handler: (req: ExpressServerRequest, res: ExpressServerResponse) => void ): void;
+       put(path: RegExp, handler: (req: ExpressServerRequest, res: ExpressServerResponse) => void ): void;
+       put(path: string, callbacks: any, callback: () => void ): void;
        all(path: string, callback: Function): void;
        all(path: string, callback: Function, callback2: Function): void;
        locals: any;

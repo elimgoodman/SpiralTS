@@ -41,15 +41,10 @@ module Fields {
 
 module Editors {
     export class Editor {
-        constructor(public display_text: string, public value_fn: (instance: Concepts.ConceptInstance) => any) {}
+        constructor(public display_text: string, public value_field: string){}
+
         getTemplate(): string {
             return "none";
-        }
-        renderEditor(instance: Concepts.ConceptInstance) {
-            var template = this.getTemplate();
-            return ejs.compile(template)({
-                value: this.value_fn(instance)
-            });
         }
     }
 
@@ -95,11 +90,8 @@ module Concepts {
     export var Page = new Concept(
         "page", 
         "Page", 
-        [new Editors.URL("The URL", function(page_instance: Concepts.ConceptInstance){
-            return page_instance.get("url");
-        }), new Editors.HTML("The body", function(page_instance: Concepts.ConceptInstance){
-            return page_instance.get("body");
-        })], 
+        [new Editors.URL("The URL", "url"),
+         new Editors.HTML("The body", "body")], 
         [new Fields.URL("url"), new Fields.HTML("body")],
         "url"
     );
@@ -107,20 +99,17 @@ module Concepts {
     export var Partial = new Concept(
         "partial", 
         "Partial", 
-        [new Editors.Name("Name", function(partial_instance: Concepts.ConceptInstance){
-            return partial_instance.get("name");
-        }), new Editors.HTML("The body", function(partial_instance: Concepts.ConceptInstance){
-            return partial_instance.get("body");
-        })], 
+        [new Editors.Name("Name", "name"),
+         new Editors.HTML("The body", "body")], 
         [new Fields.HTML("name"), new Fields.HTML("body")],
         "name"
     );
 
     export class ConceptInstance implements Listable {
-        public unique_id:string;
+        public id:string;
 
         constructor(public concept: Concept, private values: any){
-            this.unique_id = this.getListLabel();
+            this.id = this.getListLabel();
         }
 
         get(field: string) : any {
@@ -134,27 +123,74 @@ module Concepts {
 }
 
 class Action {
-    constructor(public name: string, public body: () => void){}
+    constructor(
+        public name: string, 
+        public display_name:string, 
+        public body: (environment:any) => void,
+        public isValid: (environment:any) => bool){}
 }
 
 class Project {
-    public actions: Action[];
-    constructor(public name: string, public concepts: Concepts.Concept[]){}
-    executeAction(action_name:string) {
-        var action = _.find(this.actions, function(action:Action){
+
+    private environment = {};
+
+    constructor(public name: string, public concepts: Concepts.Concept[], private actions: Action[]){}
+    performAction(action_name:string) {
+        var action = _.find(this.getActions(), function(action:Action){
             return action.name == action_name;
         });
 
-        action.body();
+        action.body(this.environment);
     }
     getConcept(name:string) {
         return _.find(this.concepts, function(concept){
             return concept.name == name;
         });
     }
+    getActions() {
+        var self = this;
+        return _.filter(this.actions, function(action){
+            return action.isValid(self.environment);
+        });
+    }
 }
 
-var project = new Project("My Project", [Concepts.Page, Concepts.Partial]);
+declare var page_instances;
+
+var actions = [
+    new Action("run", "Run", function(environment) {
+        var http = require('http'),
+            director = require('director');
+
+        var router = new director.http.Router();
+
+        _.each(page_instances, function(instance: Concepts.ConceptInstance) {
+            router.get(instance.get('url'), function(req, res) {
+                this.res.writeHead(200, { 'Content-Type': 'text/html' })
+                this.res.end(instance.get('body'));
+            });
+        });
+
+        var server = http.createServer(function (req, res) {
+            router.dispatch(req, res);
+        }).listen(1234);
+
+        environment.server = server;
+        environment.server_running = true;
+    },
+    function(environment) {
+        return !environment.server_running;
+    }),
+    new Action("stop", "Stop", function(environment) {
+        environment.server.close();
+        environment.server_running = false;
+    },
+    function(environment) {
+        return environment.server_running;
+    }),
+];
+
+var project = new Project("My Project", [Concepts.Page, Concepts.Partial], actions);
 
 var page_instances = [
 new Concepts.ConceptInstance(Concepts.Page, {
@@ -183,25 +219,6 @@ var instances = {
     partial: partial_instances
 };
 
-var first_instance = page_instances[0];
-
-project.actions = [
-    new Action("run", function() {
-        var project_app = express.createServer();
-        _.each(page_instances, function(instance: Concepts.ConceptInstance) {
-            project_app.get(instance.get('url'), function(req, res) {
-                res.send(instance.get('body'));
-            });
-        });
-
-        project_app.listen(1234, function(){
-           console.log("Listening on port 1234!");
-        });
-    })
-];
-
-//project.executeAction('run');
-
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     res.render('index', {});
@@ -211,28 +228,53 @@ app.get('/concepts', function(req: express.ExpressServerRequest, res: express.Ex
     res.json(project.concepts);
 });
 
+app.get('/actions', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    res.json(project.getActions());
+});
+
 app.get('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     var name = req.params.name;
     res.json(instances[name]);
 });
 
-app.get('/concepts/:name/:instance_id/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+app.get('/concepts/:name/instances/:instance_id/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
     
     var instance = _.find(instances[concept_name], function(instance) {
-        return instance.unique_id == instance_id;
+        return instance.id == instance_id;
     });
     
     var concept = project.getConcept(concept_name);
     var templates = _.map(concept.editors, function(editor){
         return {
-            body: editor.renderEditor(instance),
-            display_text: editor.display_text
+            body: editor.getTemplate(),
+            display_text: editor.display_text,
+            value_field: editor.value_field
         };
     });
 
     res.json(templates);
+});
+
+app.put('/concepts/:name/instances/:instance_id', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var concept_name = req.params.name;
+    var instance_id = req.params.instance_id;
+    
+    var instance = _.find(instances[concept_name], function(instance) {
+        return instance.id == instance_id;
+    });
+
+    instance.values = req.body.values;
+    res.json(instance);
+});
+
+app.post('/actions/:name/perform', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var name = req.params.name;
+
+    project.performAction(name);
+
+    res.json({succes: true});
 });
 
 app.listen(3000, function(){

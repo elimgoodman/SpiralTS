@@ -68,18 +68,12 @@ var Fields;
 var Editors;
 (function (Editors) {
     var Editor = (function () {
-        function Editor(display_text, value_fn) {
+        function Editor(display_text, value_field) {
             this.display_text = display_text;
-            this.value_fn = value_fn;
+            this.value_field = value_field;
         }
         Editor.prototype.getTemplate = function () {
             return "none";
-        };
-        Editor.prototype.renderEditor = function (instance) {
-            var template = this.getTemplate();
-            return ejs.compile(template)({
-                value: this.value_fn(instance)
-            });
         };
         return Editor;
     })();
@@ -139,23 +133,15 @@ var Concepts;
     })();
     Concepts.Concept = Concept;    
     Concepts.Page = new Concept("page", "Page", [
-        new Editors.URL("The URL", function (page_instance) {
-            return page_instance.get("url");
-        }), 
-        new Editors.HTML("The body", function (page_instance) {
-            return page_instance.get("body");
-        })
+        new Editors.URL("The URL", "url"), 
+        new Editors.HTML("The body", "body")
     ], [
         new Fields.URL("url"), 
         new Fields.HTML("body")
     ], "url");
     Concepts.Partial = new Concept("partial", "Partial", [
-        new Editors.Name("Name", function (partial_instance) {
-            return partial_instance.get("name");
-        }), 
-        new Editors.HTML("The body", function (partial_instance) {
-            return partial_instance.get("body");
-        })
+        new Editors.Name("Name", "name"), 
+        new Editors.HTML("The body", "body")
     ], [
         new Fields.HTML("name"), 
         new Fields.HTML("body")
@@ -164,7 +150,7 @@ var Concepts;
         function ConceptInstance(concept, values) {
             this.concept = concept;
             this.values = values;
-            this.unique_id = this.getListLabel();
+            this.id = this.getListLabel();
         }
         ConceptInstance.prototype.get = function (field) {
             return this.values[field];
@@ -178,34 +164,75 @@ var Concepts;
 })(Concepts || (Concepts = {}));
 
 var Action = (function () {
-    function Action(name, body) {
+    function Action(name, display_name, body, isValid) {
         this.name = name;
+        this.display_name = display_name;
         this.body = body;
+        this.isValid = isValid;
     }
     return Action;
 })();
 var Project = (function () {
-    function Project(name, concepts) {
+    function Project(name, concepts, actions) {
         this.name = name;
         this.concepts = concepts;
+        this.actions = actions;
+        this.environment = {
+        };
     }
-    Project.prototype.executeAction = function (action_name) {
-        var action = _.find(this.actions, function (action) {
+    Project.prototype.performAction = function (action_name) {
+        var action = _.find(this.getActions(), function (action) {
             return action.name == action_name;
         });
-        action.body();
+        action.body(this.environment);
     };
     Project.prototype.getConcept = function (name) {
         return _.find(this.concepts, function (concept) {
             return concept.name == name;
         });
     };
+    Project.prototype.getActions = function () {
+        var self = this;
+        return _.filter(this.actions, function (action) {
+            return action.isValid(self.environment);
+        });
+    };
     return Project;
 })();
+var actions = [
+    new Action("run", "Run", function (environment) {
+        var http = require('http');
+        var director = require('director');
+
+        var router = new director.http.Router();
+        _.each(page_instances, function (instance) {
+            router.get(instance.get('url'), function (req, res) {
+                this.res.writeHead(200, {
+                    'Content-Type': 'text/html'
+                });
+                this.res.end(instance.get('body'));
+            });
+        });
+        var server = http.createServer(function (req, res) {
+            router.dispatch(req, res);
+        }).listen(1234);
+        environment.server = server;
+        environment.server_running = true;
+    }, function (environment) {
+        return !environment.server_running;
+    }), 
+    new Action("stop", "Stop", function (environment) {
+        environment.server.close();
+        environment.server_running = false;
+    }, function (environment) {
+        return environment.server_running;
+    }), 
+    
+];
 var project = new Project("My Project", [
     Concepts.Page, 
     Concepts.Partial
-]);
+], actions);
 var page_instances = [
     new Concepts.ConceptInstance(Concepts.Page, {
         url: "/foo/bar",
@@ -230,20 +257,6 @@ var instances = {
     page: page_instances,
     partial: partial_instances
 };
-var first_instance = page_instances[0];
-project.actions = [
-    new Action("run", function () {
-        var project_app = express.createServer();
-        _.each(page_instances, function (instance) {
-            project_app.get(instance.get('url'), function (req, res) {
-                res.send(instance.get('body'));
-            });
-        });
-        project_app.listen(1234, function () {
-            console.log("Listening on port 1234!");
-        });
-    })
-];
 app.get('/', function (req, res) {
     res.render('index', {
     });
@@ -251,24 +264,44 @@ app.get('/', function (req, res) {
 app.get('/concepts', function (req, res) {
     res.json(project.concepts);
 });
+app.get('/actions', function (req, res) {
+    res.json(project.getActions());
+});
 app.get('/concepts/:name/instances', function (req, res) {
     var name = req.params.name;
     res.json(instances[name]);
 });
-app.get('/concepts/:name/:instance_id/editors', function (req, res) {
+app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
     var instance = _.find(instances[concept_name], function (instance) {
-        return instance.unique_id == instance_id;
+        return instance.id == instance_id;
     });
     var concept = project.getConcept(concept_name);
     var templates = _.map(concept.editors, function (editor) {
         return {
-            body: editor.renderEditor(instance),
-            display_text: editor.display_text
+            body: editor.getTemplate(),
+            display_text: editor.display_text,
+            value_field: editor.value_field
         };
     });
     res.json(templates);
+});
+app.put('/concepts/:name/instances/:instance_id', function (req, res) {
+    var concept_name = req.params.name;
+    var instance_id = req.params.instance_id;
+    var instance = _.find(instances[concept_name], function (instance) {
+        return instance.id == instance_id;
+    });
+    instance.values = req.body.values;
+    res.json(instance);
+});
+app.post('/actions/:name/perform', function (req, res) {
+    var name = req.params.name;
+    project.performAction(name);
+    res.json({
+        succes: true
+    });
 });
 app.listen(3000, function () {
     console.log("Listening on port %d in %s mode", 3000, app.settings.env);

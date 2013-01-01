@@ -10,7 +10,9 @@
     </head>
     <body>
         <div id="top-bar">
-            <span>Project Name</span>
+            <span id="project-name">Project Name</span>
+            <ul id="actions"></ul>
+            <a href="#" id="save-link">Save</a>
         </div>
         <div id="content">
             <ul class="entity-list" id="concept-list"></ul>
@@ -24,11 +26,15 @@
     </script>
 
     <script type="text/html" id="instance-list-view">
-        <%= unique_id %>
+        <%= id %>
     </script>
 
     <script type="text/html" id="editor-list-view">
         <%= display_text %>: <%= body %>
+    </script>
+
+    <script type="text/html" id="action-list-view">
+        <a href='#'><%= display_name %></a>
     </script>
 
     <script type="text/javascript" src="/js/index.js"></script>
