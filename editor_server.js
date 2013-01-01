@@ -1,12 +1,9 @@
-var __extends = this.__extends || function (d, b) {
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-}
 
 
 var express = require("express")
 var _ = require("underscore")
+var Serialization = require("./lib/serialization")
+var Concepts = require("./lib/concepts")
 var notemplate = require('express-notemplate');
 var ejs = require('ejs');
 var app = express.createServer();
@@ -27,142 +24,6 @@ app.configure('development', function () {
 app.configure('production', function () {
     app.use(express.errorHandler());
 });
-var Fields;
-(function (Fields) {
-    var Field = (function () {
-        function Field(name) {
-            this.name = name;
-        }
-        return Field;
-    })();
-    Fields.Field = Field;    
-    var Str = (function (_super) {
-        __extends(Str, _super);
-        function Str() {
-            _super.apply(this, arguments);
-
-        }
-        return Str;
-    })(Field);
-    Fields.Str = Str;    
-    var URL = (function (_super) {
-        __extends(URL, _super);
-        function URL() {
-            _super.apply(this, arguments);
-
-        }
-        return URL;
-    })(Str);
-    Fields.URL = URL;    
-    var HTML = (function (_super) {
-        __extends(HTML, _super);
-        function HTML() {
-            _super.apply(this, arguments);
-
-        }
-        return HTML;
-    })(Str);
-    Fields.HTML = HTML;    
-})(Fields || (Fields = {}));
-
-var Editors;
-(function (Editors) {
-    var Editor = (function () {
-        function Editor(display_text, value_field) {
-            this.display_text = display_text;
-            this.value_field = value_field;
-        }
-        Editor.prototype.getTemplate = function () {
-            return "none";
-        };
-        return Editor;
-    })();
-    Editors.Editor = Editor;    
-    var Name = (function (_super) {
-        __extends(Name, _super);
-        function Name() {
-            _super.apply(this, arguments);
-
-        }
-        Name.prototype.getTemplate = function () {
-            return "<input value='<%= value %>'/>";
-        };
-        return Name;
-    })(Editor);
-    Editors.Name = Name;    
-    var URL = (function (_super) {
-        __extends(URL, _super);
-        function URL() {
-            _super.apply(this, arguments);
-
-        }
-        URL.prototype.getTemplate = function () {
-            return "<input value='<%= value %>'/>";
-        };
-        return URL;
-    })(Editor);
-    Editors.URL = URL;    
-    var HTML = (function (_super) {
-        __extends(HTML, _super);
-        function HTML() {
-            _super.apply(this, arguments);
-
-        }
-        HTML.prototype.getTemplate = function () {
-            return "<textarea>'<%= value %>'</textarea>";
-        };
-        return HTML;
-    })(Editor);
-    Editors.HTML = HTML;    
-})(Editors || (Editors = {}));
-
-var Concepts;
-(function (Concepts) {
-    var Concept = (function () {
-        function Concept(name, display_name, editors, fields, list_label_field) {
-            this.name = name;
-            this.display_name = display_name;
-            this.editors = editors;
-            this.fields = fields;
-            this.list_label_field = list_label_field;
-        }
-        Concept.prototype.getListLabel = function () {
-            return this.display_name;
-        };
-        return Concept;
-    })();
-    Concepts.Concept = Concept;    
-    Concepts.Page = new Concept("page", "Page", [
-        new Editors.URL("The URL", "url"), 
-        new Editors.HTML("The body", "body")
-    ], [
-        new Fields.URL("url"), 
-        new Fields.HTML("body")
-    ], "url");
-    Concepts.Partial = new Concept("partial", "Partial", [
-        new Editors.Name("Name", "name"), 
-        new Editors.HTML("The body", "body")
-    ], [
-        new Fields.HTML("name"), 
-        new Fields.HTML("body")
-    ], "name");
-    var ConceptInstance = (function () {
-        function ConceptInstance(concept, values) {
-            this.concept = concept;
-            this.values = values;
-            this.id = this.getListLabel();
-        }
-        ConceptInstance.prototype.get = function (field) {
-            return this.values[field];
-        };
-        ConceptInstance.prototype.getListLabel = function () {
-            return String(this.get(this.concept.list_label_field));
-        };
-        return ConceptInstance;
-    })();
-    Concepts.ConceptInstance = ConceptInstance;    
-})(Concepts || (Concepts = {}));
-
 var Action = (function () {
     function Action(name, display_name, body, isValid) {
         this.name = name;
@@ -205,7 +66,7 @@ var actions = [
         var director = require('director');
 
         var router = new director.http.Router();
-        _.each(page_instances, function (instance) {
+        _.each(instances.getByConceptName('pages'), function (instance) {
             router.get(instance.get('url'), function (req, res) {
                 this.res.writeHead(200, {
                     'Content-Type': 'text/html'
@@ -233,30 +94,10 @@ var project = new Project("My Project", [
     Concepts.Page, 
     Concepts.Partial
 ], actions);
-var page_instances = [
-    new Concepts.ConceptInstance(Concepts.Page, {
-        url: "/foo/bar",
-        body: "<h1>Hello world!</h1>"
-    }), 
-    new Concepts.ConceptInstance(Concepts.Page, {
-        url: "/foo/baz",
-        body: "<h1>Goodbye world!</h1>"
-    })
-];
-var partial_instances = [
-    new Concepts.ConceptInstance(Concepts.Partial, {
-        name: "button",
-        body: "<span class='button'>Click me</span>"
-    }), 
-    new Concepts.ConceptInstance(Concepts.Partial, {
-        name: "badge",
-        body: "<span class='badge'>Pin me</span>"
-    })
-];
-var instances = {
-    page: page_instances,
-    partial: partial_instances
-};
+var project_path = "./sample_project";
+var reader = new Serialization.Reader(project_path);
+var writer = new Serialization.Writer(project_path);
+var instances = reader.readInstances(project.concepts);
 app.get('/', function (req, res) {
     res.render('index', {
     });
@@ -269,14 +110,12 @@ app.get('/actions', function (req, res) {
 });
 app.get('/concepts/:name/instances', function (req, res) {
     var name = req.params.name;
-    res.json(instances[name]);
+    res.json(instances.getByConceptName(name));
 });
 app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
-    var instance = _.find(instances[concept_name], function (instance) {
-        return instance.id == instance_id;
-    });
+    var instance = instances.getById(instance_id);
     var concept = project.getConcept(concept_name);
     var templates = _.map(concept.editors, function (editor) {
         return {
@@ -290,10 +129,9 @@ app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
 app.put('/concepts/:name/instances/:instance_id', function (req, res) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
-    var instance = _.find(instances[concept_name], function (instance) {
-        return instance.id == instance_id;
-    });
-    instance.values = req.body.values;
+    var instance = instances.getById(instance_id);
+    instance.setValues(req.body.values);
+    writer.writeInstance(instance);
     res.json(instance);
 });
 app.post('/actions/:name/perform', function (req, res) {

@@ -6,6 +6,9 @@ import url = module("url")
 import express = module("express")
 import _ = module("underscore")
 
+import Serialization = module("lib/serialization")
+import Concepts = module("lib/concepts")
+
 var notemplate = require('express-notemplate');
 var ejs = require('ejs');
 
@@ -29,99 +32,6 @@ app.configure('production', function(){
  app.use(express.errorHandler());
 });
 
-module Fields {
-    export class Field {
-        constructor(public name:string){}
-    }
-
-    export class Str extends Field {}
-    export class URL extends Str {}
-    export class HTML extends Str {}
-}
-
-module Editors {
-    export class Editor {
-        constructor(public display_text: string, public value_field: string){}
-
-        getTemplate(): string {
-            return "none";
-        }
-    }
-
-    export class Name extends Editor {
-        getTemplate() {
-            return "<input value='<%= value %>'/>";
-        }
-    }    
-    
-    export class URL extends Editor {
-        getTemplate() {
-            return "<input value='<%= value %>'/>";
-        }
-    }
-
-    export class HTML extends Editor {
-        getTemplate() {
-
-            return "<textarea>'<%= value %>'</textarea>";
-        }
-    }
-}
-
-interface Listable {
-    getListLabel(): string;
-}
-
-module Concepts {
-    export class Concept implements Listable {
-        constructor(
-            public name: string, 
-            public display_name: string, 
-            public editors: Editors.Editor[], 
-            public fields: Fields.Field[],
-            public list_label_field:string )
-        {};
-
-        getListLabel() {
-            return this.display_name;
-        }
-    }
-
-    export var Page = new Concept(
-        "page", 
-        "Page", 
-        [new Editors.URL("The URL", "url"),
-         new Editors.HTML("The body", "body")], 
-        [new Fields.URL("url"), new Fields.HTML("body")],
-        "url"
-    );
-
-    export var Partial = new Concept(
-        "partial", 
-        "Partial", 
-        [new Editors.Name("Name", "name"),
-         new Editors.HTML("The body", "body")], 
-        [new Fields.HTML("name"), new Fields.HTML("body")],
-        "name"
-    );
-
-    export class ConceptInstance implements Listable {
-        public id:string;
-
-        constructor(public concept: Concept, private values: any){
-            this.id = this.getListLabel();
-        }
-
-        get(field: string) : any {
-            return this.values[field];
-        }
-
-        getListLabel() {
-            return String(this.get(this.concept.list_label_field));
-        }
-    }
-}
-
 class Action {
     constructor(
         public name: string, 
@@ -134,7 +44,11 @@ class Project {
 
     private environment = {};
 
-    constructor(public name: string, public concepts: Concepts.Concept[], private actions: Action[]){}
+    constructor(
+        public name: string, 
+        public concepts: Concepts.Concept[], 
+        private actions: Action[]){}
+
     performAction(action_name:string) {
         var action = _.find(this.getActions(), function(action:Action){
             return action.name == action_name;
@@ -155,8 +69,6 @@ class Project {
     }
 }
 
-declare var page_instances;
-
 var actions = [
     new Action("run", "Run", function(environment) {
         var http = require('http'),
@@ -164,7 +76,7 @@ var actions = [
 
         var router = new director.http.Router();
 
-        _.each(page_instances, function(instance: Concepts.ConceptInstance) {
+        _.each(instances.getByConceptName('pages'), function(instance: Concepts.ConceptInstance) {
             router.get(instance.get('url'), function(req, res) {
                 this.res.writeHead(200, { 'Content-Type': 'text/html' })
                 this.res.end(instance.get('body'));
@@ -190,34 +102,16 @@ var actions = [
     }),
 ];
 
-var project = new Project("My Project", [Concepts.Page, Concepts.Partial], actions);
+var project = new Project(
+    "My Project", 
+    [Concepts.Page, Concepts.Partial], 
+    actions
+);
 
-var page_instances = [
-new Concepts.ConceptInstance(Concepts.Page, {
-    url: "/foo/bar",
-    body: "<h1>Hello world!</h1>"
-}),
-new Concepts.ConceptInstance(Concepts.Page, {
-    url: "/foo/baz",
-    body: "<h1>Goodbye world!</h1>"
-})    
-];
-
-var partial_instances = [
-new Concepts.ConceptInstance(Concepts.Partial, {
-    name: "button",
-    body: "<span class='button'>Click me</span>"
-}),
-new Concepts.ConceptInstance(Concepts.Partial, {
-    name: "badge",
-    body: "<span class='badge'>Pin me</span>"
-})
-];
-
-var instances = {
-    page: page_instances,
-    partial: partial_instances
-};
+var project_path = "./sample_project";
+var reader = new Serialization.Reader(project_path);
+var writer = new Serialization.Writer(project_path);
+var instances = reader.readInstances(project.concepts);
 
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
@@ -234,16 +128,14 @@ app.get('/actions', function(req: express.ExpressServerRequest, res: express.Exp
 
 app.get('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     var name = req.params.name;
-    res.json(instances[name]);
+    res.json(instances.getByConceptName(name));
 });
 
 app.get('/concepts/:name/instances/:instance_id/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
     
-    var instance = _.find(instances[concept_name], function(instance) {
-        return instance.id == instance_id;
-    });
+    var instance = instances.getById(instance_id);
     
     var concept = project.getConcept(concept_name);
     var templates = _.map(concept.editors, function(editor){
@@ -261,11 +153,12 @@ app.put('/concepts/:name/instances/:instance_id', function(req: express.ExpressS
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
     
-    var instance = _.find(instances[concept_name], function(instance) {
-        return instance.id == instance_id;
-    });
+    var instance = instances.getById(instance_id);
 
-    instance.values = req.body.values;
+    instance.setValues(req.body.values);
+
+    writer.writeInstance(instance);
+
     res.json(instance);
 });
 
