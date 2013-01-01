@@ -1,0 +1,3 @@
+#!/bin/bash
+
+find . -path ./static -prune -o  -name '*.js' -type f -exec rm {} \;
