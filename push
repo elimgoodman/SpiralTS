@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./clean && git add . -A;git commit -m 'moar';git push origin `git rev-parse --symbolic-full-name --abbrev-ref HEAD`;
