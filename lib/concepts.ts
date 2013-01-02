@@ -7,29 +7,11 @@ export class Concept {
     constructor(
         public name: string, 
         public display_name: string, 
-        public editors: Editors.Editor[], 
+        public editors: Editors.Instance[], 
         public fields: Fields.Field[],
         public list_label_field:string )
     {};
 }
-
-export var Page = new Concept(
-    "pages", 
-    "Pages", 
-    [new Editors.URL("The URL", "url"),
-     new Editors.HTML("The body", "body")], 
-    [new Fields.URL("url"), new Fields.HTML("body")],
-    "url"
-);
-
-export var Partial = new Concept(
-    "partials", 
-    "Partials", 
-    [new Editors.Name("Name", "name"),
-     new Editors.HTML("The body", "body")], 
-    [new Fields.HTML("name"), new Fields.HTML("body")],
-    "name"
-);
 
 export class ConceptInstance {
     public id:string;

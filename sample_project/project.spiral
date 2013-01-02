@@ -1,11 +1,14 @@
-#spiral/Project {
+#spiral/Project/Instance {
     :name "My Project",
-    :concepts [#spiral/Concept :pages, #spiral/Concept :partials],
+    :concepts [
+        #spiral/Concept/Reference :pages, 
+        #spiral/Concept/Reference :partials
+    ],
     :actions [
-        #spiral/Action {
+        #spiral/Action/Instance {
             :name "run",
             :display_name "Run"
-            :body #spiral/Fn {
+            :body #spiral/Fn/Instance {
                 :params ["environment"]
                 :modules [
                     #spiral/Module {
@@ -21,23 +24,9 @@
                         :as "http"
                     }
                 ]
-                :body "var router = new director.http.Router();
-
-                        _.each(instances.getByConceptName('pages'), function(instance) {
-                            router.get(instance.get('url'), function(req, res) {
-                                this.res.writeHead(200, { 'Content-Type': 'text/html' })
-                                this.res.end(instance.get('body'));
-                            });
-                        });
-
-                        var server = http.createServer(function (req, res) {
-                            router.dispatch(req, res);
-                        }).listen(1234);
-
-                        environment.server = server;
-                        environment.server_running = true;"
+                :body "console.log('running');"
             },
-            :isValid #spiral/Fn {
+            :isValid #spiral/Fn/Instance {
                 :params ["environment"]
                 :body "return true;"
                 :modules []

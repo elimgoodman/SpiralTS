@@ -1,0 +1,27 @@
+#spiral/Concept/Definition {
+    :name :pages
+    :display_name "Pages"
+    :unique_id_field :url
+    :editors [
+        #spiral/Editor/Instance {
+            :editor #spiral/Editor/Reference :url
+            :label "The URL"
+            :value_field :url
+        }
+        #spiral/Editor/Instance {
+            :editor #spiral/Editor/Reference :html
+            :label "The Body"
+            :value_field :body
+        }
+    ]
+    :fields [
+        #spiral/Field/Instance {
+            :field #spiral/Field/Reference :url
+            :name :url
+        }
+        #spiral/Field/Instance {
+            :field #spiral/Field/Reference :html
+            :name :body
+        }
+    ]
+}

@@ -8,11 +8,54 @@ import Concepts = module("concepts");
 import Editors = module("editors");
 import Fields = module("fields");
 import Project = module("project");
+import Meta = module("meta");
 
 var e = require("jsedn");
 
 function getPathForConceptInstances(project_path:string, concept: Concepts.Concept) {
     return project_path + "/instances/" + concept.name;
+}
+
+class Reference {
+    constructor(public entity_type:string, public id:string){};
+}
+
+export function setTagActions() {
+    e.setTagAction(new e.Tag('spiral', 'Project', 'Instance'), function(obj) {
+        var name = e.atPath(obj, "name");
+        var concepts = e.toJS(e.atPath(obj, "concepts"));
+        var actions = e.toJS(e.atPath(obj, "actions"));
+
+        return new Project.Project(name, concepts, actions);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Concept', 'Reference'), function(concept_name) {
+        return new Reference('Concept', concept_name);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Action', 'Instance'), function(obj) {
+        var name = e.atPath(obj, "name");
+        var display_name = e.atPath(obj, "display_name");
+        var body = e.atPath(obj, "body");
+        var isValid = e.atPath(obj, "isValid");
+
+        return new Project.Action(name, display_name, body, isValid);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Fn', "Instance"), function(obj) {
+        var params = e.toJS(e.atPath(obj, "params"));
+        var modules = e.toJS(e.atPath(obj, "modules"));
+        var body = e.atPath(obj, "body");
+
+        return new Project.Fn(params, body, modules);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Module'), function(obj) {
+        var name = e.atPath(obj, "name");
+        var alias = e.atPath(obj, "as");
+
+        return new Project.Module(name, alias);
+    });
 }
 
 export class InstanceReader {
@@ -51,12 +94,43 @@ export class InstanceWriter {
     }
 }
 
-export class EditorReader {
+class DefinitionReader {
     constructor(public project_path:string){}
-    read(): Editors.Store {
+    read(): Meta.DefinitionStore {
+        setTagActions();
+
+        var store = this.getStore();
+        var path = this.project_path + "/" + this.getPathSegment();
+
+        var defs = fs.readdirSync(path);
+        _.each(defs, function(instance){
+            var def_txt = fs.readFileSync(path + "/" + instance, "utf-8");
+            var i = e.parse(def_txt);
+            store.add(i);
+        });
+
+        return store;
+    }
+
+    getPathSegment(): string {
+        return null;
+    }
+
+    getStore(): Meta.DefinitionStore {
+        return null;
+    }
+}
+
+export class EditorReader extends DefinitionReader {
+    getPathSegment(): string {
+        return "editors";
+    }
+
+    getStore(): Meta.DefinitionStore {
         return new Editors.Store();
     }
 }
+
 export class FieldReader {
     constructor(public project_path:string){}
     read(): Fields.Store {
@@ -68,9 +142,6 @@ export class ConceptReader {
     read(): Concepts.ConceptStore {
         var store = new Concepts.ConceptStore();
 
-        //FIXME: HACK
-        store.add(Concepts.Page);
-        store.add(Concepts.Partial);
         return store;
     }
 }
@@ -79,43 +150,6 @@ export class ProjectReader {
     read(concepts: Concepts.ConceptStore): Project.Project {
         var path = this.project_path + "/project.spiral";
         var txt = fs.readFileSync(path, "utf-8");
-
-        e.setTagAction(new e.Tag('spiral', 'Project'), function(obj) {
-            var name = e.atPath(obj, "name");
-            var concepts = e.toJS(e.atPath(obj, "concepts"));
-            var actions = e.toJS(e.atPath(obj, "actions"));
-
-            return new Project.Project(name, concepts, actions);
-        });
-
-        e.setTagAction(new e.Tag('spiral', 'Concept'), function(concept_name) {
-            return concepts.getByName(concept_name);
-        });
-
-        e.setTagAction(new e.Tag('spiral', 'Action'), function(obj) {
-            var name = e.atPath(obj, "name");
-            var display_name = e.atPath(obj, "display_name");
-            var body = e.atPath(obj, "body");
-            var isValid = e.atPath(obj, "isValid");
-
-            return new Project.Action(name, display_name, body, isValid);
-        });
-
-        e.setTagAction(new e.Tag('spiral', 'Fn'), function(obj) {
-            var params = e.toJS(e.atPath(obj, "params"));
-            var modules = e.toJS(e.atPath(obj, "modules"));
-            var body = e.atPath(obj, "body");
-
-            return new Project.Fn(params, body, modules);
-        });
-
-        e.setTagAction(new e.Tag('spiral', 'Module'), function(obj) {
-            var name = e.atPath(obj, "name");
-            var alias = e.atPath(obj, "as");
-
-            return new Project.Module(name, alias);
-        });
-
         return e.parse(txt);
     }
 }

@@ -1,30 +1,16 @@
-export class Editor {
-    constructor(public display_text: string, public value_field: string){}
+import Meta = module("meta");
 
-    getTemplate(): string {
-        return "none";
-    }
+export class Editor implements Meta.Definition {
+    constructor(public type: string, public template: string){};
 }
 
-export class Name extends Editor {
-    getTemplate() {
-        return "<input value='<%= value %>'/>";
-    }
+export class Instance implements Meta.Instance {
+    constructor(public editor: Editor, public display_text: string, public value_field: string){}
 }
 
-export class URL extends Editor {
-    getTemplate() {
-        return "<input value='<%= value %>'/>";
+export class Store implements Meta.DefinitionStore {
+    private editors: Editor[] = [];
+    add(e:Editor) {
+        this.editors.push(e);
     }
-}
-
-export class HTML extends Editor {
-    getTemplate() {
-
-        return "<textarea>'<%= value %>'</textarea>";
-    }
-}
-
-export class Store {
-    private editors: Editor[];
 }

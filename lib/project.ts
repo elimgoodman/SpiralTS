@@ -26,11 +26,6 @@ export class Fn {
         });
         params.push(this.body);
 
-        //console.log("*****");
-        //console.log(params.length);
-        //console.log(vars.length);
-        //console.log("****");
-
         var applied = Function.apply(f, params);
         return applied(vars);
     }

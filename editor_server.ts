@@ -32,39 +32,6 @@ app.configure('production', function(){
  app.use(express.errorHandler());
 });
 
-//var actions = [
-    //new Action("run", "Run", function(environment) {
-        //var http = require('http'),
-            //director = require('director');
-
-        //var router = new director.http.Router();
-
-        //_.each(instances.getByConceptName('pages'), function(instance: Concepts.ConceptInstance) {
-            //router.get(instance.get('url'), function(req, res) {
-                //this.res.writeHead(200, { 'Content-Type': 'text/html' })
-                //this.res.end(instance.get('body'));
-            //});
-        //});
-
-        //var server = http.createServer(function (req, res) {
-            //router.dispatch(req, res);
-        //}).listen(1234);
-
-        //environment.server = server;
-        //environment.server_running = true;
-    //},
-    //function(environment) {
-        //return !environment.server_running;
-    //}),
-    //new Action("stop", "Stop", function(environment) {
-        //environment.server.close();
-        //environment.server_running = false;
-    //},
-    //function(environment) {
-        //return environment.server_running;
-    //}),
-//];
-
 var project_path = "./sample_project";
 
 var fields = new Serialization.FieldReader(project_path).read();

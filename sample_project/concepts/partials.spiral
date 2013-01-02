@@ -1,0 +1,28 @@
+#spiral/Concept/Definition {
+    :name :partiald
+    :display_name "Partials"
+    :unique_id_field :name
+    :editors [
+        #spiral/Editor/Instance {
+            :editor #spiral/Editor/Reference :name
+            :label "Name"
+            :value_field :name
+        }
+        #spiral/Editor/Instance {
+            :editor #spiral/Editor/Reference :html
+            :label "The Body"
+            :value_field :body
+        }
+    ]
+    :fields [
+        #spiral/Field/Instance {
+            :field #spiral/Field/Reference :string
+            :name :name
+        }
+        #spiral/Field/Instance {
+            :field #spiral/Field/Reference :html
+            :name :body
+        }
+    ]
+}
+

@@ -1,0 +1,4 @@
+#spiral/Editor/Definition {
+    :type :url
+    :template "<input value='<%= value %>'/>"
+}

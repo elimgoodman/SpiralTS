@@ -1,10 +1,10 @@
 export class Field {
-    constructor(public name:string){}
+    constructor(public type: string){}
 }
 
-export class Str extends Field {}
-export class URL extends Str {}
-export class HTML extends Str {}
+export class Instance {
+    constructor(public name:string){}
+}
 
 export class Store {
     private fields: Field[];
