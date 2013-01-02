@@ -32,86 +32,50 @@ app.configure('production', function(){
  app.use(express.errorHandler());
 });
 
-class Action {
-    constructor(
-        public name: string, 
-        public display_name:string, 
-        public body: (environment:any) => void,
-        public isValid: (environment:any) => bool){}
-}
+//var actions = [
+    //new Action("run", "Run", function(environment) {
+        //var http = require('http'),
+            //director = require('director');
 
-class Project {
+        //var router = new director.http.Router();
 
-    private environment = {};
+        //_.each(instances.getByConceptName('pages'), function(instance: Concepts.ConceptInstance) {
+            //router.get(instance.get('url'), function(req, res) {
+                //this.res.writeHead(200, { 'Content-Type': 'text/html' })
+                //this.res.end(instance.get('body'));
+            //});
+        //});
 
-    constructor(
-        public name: string, 
-        public concepts: Concepts.Concept[], 
-        private actions: Action[]){}
+        //var server = http.createServer(function (req, res) {
+            //router.dispatch(req, res);
+        //}).listen(1234);
 
-    performAction(action_name:string) {
-        var action = _.find(this.getActions(), function(action:Action){
-            return action.name == action_name;
-        });
-
-        action.body(this.environment);
-    }
-    getConcept(name:string) {
-        return _.find(this.concepts, function(concept){
-            return concept.name == name;
-        });
-    }
-    getActions() {
-        var self = this;
-        return _.filter(this.actions, function(action){
-            return action.isValid(self.environment);
-        });
-    }
-}
-
-var actions = [
-    new Action("run", "Run", function(environment) {
-        var http = require('http'),
-            director = require('director');
-
-        var router = new director.http.Router();
-
-        _.each(instances.getByConceptName('pages'), function(instance: Concepts.ConceptInstance) {
-            router.get(instance.get('url'), function(req, res) {
-                this.res.writeHead(200, { 'Content-Type': 'text/html' })
-                this.res.end(instance.get('body'));
-            });
-        });
-
-        var server = http.createServer(function (req, res) {
-            router.dispatch(req, res);
-        }).listen(1234);
-
-        environment.server = server;
-        environment.server_running = true;
-    },
-    function(environment) {
-        return !environment.server_running;
-    }),
-    new Action("stop", "Stop", function(environment) {
-        environment.server.close();
-        environment.server_running = false;
-    },
-    function(environment) {
-        return environment.server_running;
-    }),
-];
-
-var project = new Project(
-    "My Project", 
-    [Concepts.Page, Concepts.Partial], 
-    actions
-);
+        //environment.server = server;
+        //environment.server_running = true;
+    //},
+    //function(environment) {
+        //return !environment.server_running;
+    //}),
+    //new Action("stop", "Stop", function(environment) {
+        //environment.server.close();
+        //environment.server_running = false;
+    //},
+    //function(environment) {
+        //return environment.server_running;
+    //}),
+//];
 
 var project_path = "./sample_project";
-var reader = new Serialization.Reader(project_path);
-var writer = new Serialization.Writer(project_path);
-var instances = reader.readInstances(project.concepts);
+
+var fields = new Serialization.FieldReader(project_path).read();
+var editors = new Serialization.EditorReader(project_path).read();
+var concepts = new Serialization.ConceptReader(project_path).read();
+
+var project = new Serialization.ProjectReader(project_path).read(concepts);
+
+var reader = new Serialization.InstanceReader(project_path);
+var writer = new Serialization.InstanceWriter(project_path);
+var instances = reader.read(project.concepts);
 
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
@@ -157,7 +121,7 @@ app.put('/concepts/:name/instances/:instance_id', function(req: express.ExpressS
 
     instance.setValues(req.body.values);
 
-    writer.writeInstance(instance);
+    writer.write(instance);
 
     res.json(instance);
 });

@@ -10,7 +10,7 @@ export class Name extends Editor {
     getTemplate() {
         return "<input value='<%= value %>'/>";
     }
-}    
+}
 
 export class URL extends Editor {
     getTemplate() {
@@ -23,4 +23,8 @@ export class HTML extends Editor {
 
         return "<textarea>'<%= value %>'</textarea>";
     }
+}
+
+export class Store {
+    private editors: Editor[];
 }
