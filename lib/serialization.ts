@@ -16,10 +16,6 @@ function getPathForConceptInstances(project_path:string, concept: Concepts.Conce
     return project_path + "/instances/" + concept.name;
 }
 
-class Reference {
-    constructor(public entity_type:string, public id:string){};
-}
-
 export function setTagActions() {
     e.setTagAction(new e.Tag('spiral', 'Project', 'Instance'), function(obj) {
         var name = e.atPath(obj, "name");
@@ -30,7 +26,7 @@ export function setTagActions() {
     });
 
     e.setTagAction(new e.Tag('spiral', 'Concept', 'Reference'), function(concept_name) {
-        return new Reference('Concept', concept_name);
+        return new Concepts.Reference(concept_name);
     });
 
     e.setTagAction(new e.Tag('spiral', 'Action', 'Instance'), function(obj) {
@@ -55,6 +51,58 @@ export function setTagActions() {
         var alias = e.atPath(obj, "as");
 
         return new Project.Module(name, alias);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Field', 'Definition'), function(obj) {
+        var type = e.atPath(obj, "type");
+
+        return new Fields.Field(type);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Editor', 'Definition'), function(obj) {
+        var type = e.atPath(obj, "type");
+        var template = e.atPath(obj, "template");
+
+        return new Editors.Editor(type, template);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Editor', 'Instance'), function(obj) {
+        var editor_ref = e.toJS(e.atPath(obj, "editor"));
+        var label = e.atPath(obj, "label");
+        var value_field = e.atPath(obj, "value_field");
+
+        return new Editors.Instance(editor_ref, label, value_field);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Field', 'Instance'), function(obj) {
+        var field_ref = e.toJS(e.atPath(obj, "field"));
+        var name = e.atPath(obj, "name");
+
+        return new Fields.Instance(field_ref, name);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Editor', 'Reference'), function(obj) {
+        return new Editors.Reference(obj);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Field', 'Reference'), function(obj) {
+        return new Fields.Reference(obj);
+    });
+
+    e.setTagAction(new e.Tag('spiral', 'Concept', 'Definition'), function(obj) {
+        var name = e.atPath(obj, "name");
+        var display_name = e.atPath(obj, "display_name");
+        var unique_id_field = e.atPath(obj, "unique_id_field");
+        var editors = e.toJS(e.atPath(obj, "editors"));
+        var fields = e.toJS(e.atPath(obj, "fields"));
+
+        return new Concepts.Concept(
+            name,
+            display_name,
+            unique_id_field,
+            editors,
+            fields
+        );
     });
 }
 
@@ -85,7 +133,7 @@ export class InstanceWriter {
     constructor(public project_path:string){}
     write(instance: Concepts.ConceptInstance) {
         var path = getPathForConceptInstances(this.project_path, instance.concept);
-        var filename = this.cleanName(instance.getListLabel());
+        var filename = this.cleanName(instance.getUniqueId());
         fs.writeFileSync(path + "/" + filename + ".spiral", JSON.stringify(instance.values));
     }
 
@@ -131,23 +179,29 @@ export class EditorReader extends DefinitionReader {
     }
 }
 
-export class FieldReader {
-    constructor(public project_path:string){}
-    read(): Fields.Store {
+export class FieldReader extends DefinitionReader {
+    getPathSegment(): string {
+        return "fields";
+    }
+
+    getStore(): Meta.DefinitionStore {
         return new Fields.Store();
     }
 }
-export class ConceptReader {
-    constructor(public project_path:string){}
-    read(): Concepts.ConceptStore {
-        var store = new Concepts.ConceptStore();
 
-        return store;
+export class ConceptReader extends DefinitionReader {
+    getPathSegment(): string {
+        return "concepts";
+    }
+
+    getStore(): Meta.DefinitionStore {
+        return new Concepts.DefinitionStore();
     }
 }
+
 export class ProjectReader {
     constructor(public project_path:string){}
-    read(concepts: Concepts.ConceptStore): Project.Project {
+    read(): Project.Project {
         var path = this.project_path + "/project.spiral";
         var txt = fs.readFileSync(path, "utf-8");
         return e.parse(txt);

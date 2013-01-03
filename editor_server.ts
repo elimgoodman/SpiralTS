@@ -38,7 +38,7 @@ var fields = new Serialization.FieldReader(project_path).read();
 var editors = new Serialization.EditorReader(project_path).read();
 var concepts = new Serialization.ConceptReader(project_path).read();
 
-var project = new Serialization.ProjectReader(project_path).read(concepts);
+var project = new Serialization.ProjectReader(project_path).read();
 
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);

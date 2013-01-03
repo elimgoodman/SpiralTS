@@ -55,11 +55,6 @@ export class Project {
 
         action.body.execute(this.environment);
     }
-    getConcept(name:string) {
-        return _.find(this.concepts, function(concept){
-            return concept.name == name;
-        });
-    }
     getActions() {
         var self = this;
         return _.filter(this.actions, function(action){

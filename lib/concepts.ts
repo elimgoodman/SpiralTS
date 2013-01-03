@@ -2,22 +2,23 @@ import _ = module("underscore")
 
 import Editors = module("editors")
 import Fields = module("fields")
+import Meta = module("meta");
 
-export class Concept {
+export class Concept implements Meta.Definition {
     constructor(
         public name: string, 
         public display_name: string, 
+        public unique_id_field:string,
         public editors: Editors.Instance[], 
-        public fields: Fields.Field[],
-        public list_label_field:string )
+        public fields: Fields.Field[])
     {};
 }
 
-export class ConceptInstance {
+export class ConceptInstance implements Meta.Instance {
     public id:string;
 
     constructor(public concept: Concept, public values: any){
-        this.id = this.getListLabel();
+        this.id = this.getUniqueId();
     }
     
     setValues(values:any) {
@@ -28,20 +29,17 @@ export class ConceptInstance {
         return this.values[field];
     }
 
-    getListLabel() {
-        return String(this.get(this.concept.list_label_field));
+    getUniqueId() {
+        return String(this.get(this.concept.unique_id_field));
     }
 }
 
-export class ConceptStore {
-    private concepts: Concept[] = [];
+export class Reference extends Meta.Reference {
+}
 
-    add(concept: Concept) {
-        this.concepts.push(concept);
-    }
-
+export class DefinitionStore extends Meta.DefinitionStore {
     getByName(name:string): Concept {
-        return _.find(this.concepts, function(concept) {
+        return _.find(this.defs, function(concept) {
             return concept.name == name;
         });
     }

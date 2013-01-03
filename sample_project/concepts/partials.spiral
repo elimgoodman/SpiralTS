@@ -1,5 +1,5 @@
 #spiral/Concept/Definition {
-    :name :partiald
+    :name :partials
     :display_name "Partials"
     :unique_id_field :name
     :editors [

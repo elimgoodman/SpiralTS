@@ -1,11 +1,17 @@
-export class Field {
+import Meta = module("meta");
+
+export class Field implements Meta.Definition {
     constructor(public type: string){}
 }
 
-export class Instance {
-    constructor(public name:string){}
+export class Instance extends Meta.Instance {
+    constructor(parent_ref: Reference, public name:string){
+        super(parent_ref);
+    }
 }
 
-export class Store {
-    private fields: Field[];
+export class Store extends Meta.DefinitionStore {
+}
+
+export class Reference extends Meta.Reference {
 }
