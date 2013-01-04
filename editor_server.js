@@ -40,6 +40,9 @@ hydrator.hydrateProjectInstance(project);
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);
 var instances = reader.read(project.concepts);
+_.each(instances.getAll(), function (instance) {
+    hydrator.hydrateConceptInstance(instance);
+});
 app.get('/', function (req, res) {
     res.render('index', {
     });

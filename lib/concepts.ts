@@ -20,18 +20,11 @@ export class Concept implements Meta.Definition {
 
 export class Instance extends Meta.Instance {
     public id:string;
-    public values:any;
-    public parent:Concept;
-    public parent_ref:Reference;
 
-    constructor(parent: Concept, values: any){
-        var ref = new Reference(parent.getId());
-        super(ref);
-        this.parent = parent;
-        this.values = values;
-        this.id = this.getUniqueId();
+    constructor(public parent_ref: Reference, public values: any) {
+        super(parent_ref);
     }
-    
+
     setValues(values:any) {
         this.values = values;
     }
@@ -43,6 +36,10 @@ export class Instance extends Meta.Instance {
     getUniqueId() {
         var parent = <Concept> this.parent;
         return String(this.get(parent.unique_id_field));
+    }
+
+    postHydrate() {
+        this.id = this.getUniqueId();
     }
 }
 
@@ -78,6 +75,10 @@ export class InstanceStore {
 
     add(instance: Instance) {
         this.instances.push(instance);
+    }
+
+    getAll() {
+        return this.instances;
     }
 }
 

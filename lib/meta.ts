@@ -6,6 +6,7 @@ export interface Definition {
 export class Instance {
     public parent: Definition = null;
     constructor(public parent_ref){}
+    postHydrate(){}
 }
 
 export class Reference {

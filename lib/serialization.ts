@@ -104,11 +104,23 @@ export function setTagActions() {
             fields
         );
     });
+
+    e.setTagAction(new e.Tag('spiral', 'Concept', 'Instance'), function(obj) {
+        var parent_ref = e.atPath(obj, "concept");
+        var values = e.toJS(e.atPath(obj, "values"));
+
+        return new Concepts.Instance(
+            parent_ref,
+            values
+        );
+    });
 }
 
 export class InstanceReader {
     constructor(public project_path:string){}
     read(concepts: Concepts.Concept[]): Concepts.InstanceStore {
+        setTagActions();
+
         var self = this;
         var store = new Concepts.InstanceStore();
 
@@ -117,15 +129,11 @@ export class InstanceReader {
             var instances = fs.readdirSync(path);
             _.each(instances, function(instance){
                 var instance_txt = fs.readFileSync(path + "/" + instance, "utf-8");
-                var i = self.createInstanceFromString(concept, instance_txt);
+                var i = e.parse(instance_txt);
                 store.add(i);
             });
         });
         return store;
-    }
-
-    createInstanceFromString(concept: Concepts.Concept, body: string): Concepts.Instance {
-        return new Concepts.Instance(concept, JSON.parse(body));
     }
 }
 

@@ -52,7 +52,11 @@ hydrator.hydrateProjectInstance(project);
 
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);
-var instances = reader.read(project.concepts);
+var instances = <Concepts.InstanceStore> reader.read(project.concepts);
+
+_.each(instances.getAll(), function(instance){
+    hydrator.hydrateConceptInstance(instance);
+});
 
 // Routes
 app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {

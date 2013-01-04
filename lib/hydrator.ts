@@ -16,6 +16,7 @@ export class Hydrator {
 
     private hydrateInstanceParent(instance: Meta.Instance, store: Meta.DefinitionStore):void {
         instance.parent = store.getByReference(instance.parent_ref);
+        instance.postHydrate();
     }
 
     public hydrateInstance(instance: Concepts.Instance) {
@@ -48,5 +49,9 @@ export class Hydrator {
         });
 
         project.concepts = concepts;
+    }
+
+    public hydrateConceptInstance(instance: Concepts.Instance) {
+        this.hydrateInstanceParent(instance, this.concept_store);
     }
 }

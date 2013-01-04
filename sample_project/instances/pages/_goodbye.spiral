@@ -1,1 +1,7 @@
-{"url":"/goodbye","body":"'<h1>Goodbye world!!!</h1>'"}
+#spiral/Concept/Instance {
+    :concept #spiral/Concept/Reference :pages
+    :values {
+        :url "/goodbye"
+        :body "<h1>Hello world!</h1>"
+    }
+}
