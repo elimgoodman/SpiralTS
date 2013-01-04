@@ -66,7 +66,7 @@ export class InstanceStore {
 
     getByConceptName(concept_name:string): ConceptInstance[] {
         return _.filter(this.instances, function(instance) {
-            return instance.concept.name == concept_name;
+            return instance.parent.name == concept_name;
         });
     }
 

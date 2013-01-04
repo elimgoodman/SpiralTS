@@ -61,7 +61,7 @@ app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function (editor) {
         return {
-            body: editor.getTemplate(),
+            body: editor.parent.template,
             display_text: editor.display_text,
             value_field: editor.value_field
         };
