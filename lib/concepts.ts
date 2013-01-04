@@ -18,7 +18,7 @@ export class Concept implements Meta.Definition {
     }
 }
 
-export class ConceptInstance extends Meta.Instance {
+export class Instance extends Meta.Instance {
     public id:string;
     public values:any;
     public parent:Concept;
@@ -62,21 +62,21 @@ export class DefinitionStore extends Meta.DefinitionStore {
 }
 
 export class InstanceStore {
-    private instances: ConceptInstance[] = [];
+    private instances: Instance[] = [];
 
-    getByConceptName(concept_name:string): ConceptInstance[] {
+    getByConceptName(concept_name:string): Instance[] {
         return _.filter(this.instances, function(instance) {
             return instance.parent.name == concept_name;
         });
     }
 
-    getById(instance_id:string): ConceptInstance {
+    getById(instance_id:string): Instance {
         return _.find(this.instances, function(instance) {
             return instance.id == instance_id;
         });
     }
 
-    add(instance: ConceptInstance) {
+    add(instance: Instance) {
         this.instances.push(instance);
     }
 }

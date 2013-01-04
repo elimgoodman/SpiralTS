@@ -18,7 +18,7 @@ export class Hydrator {
         instance.parent = store.getByReference(instance.parent_ref);
     }
 
-    public hydrateConceptInstance(instance: Concepts.ConceptInstance) {
+    public hydrateInstance(instance: Concepts.Instance) {
         this.hydrateInstanceParent(instance, this.concept_store);
     }
 
