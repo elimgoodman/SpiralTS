@@ -12,12 +12,23 @@ export class Concept implements Meta.Definition {
         public editors: Editors.Instance[], 
         public fields: Fields.Field[])
     {};
+
+    getId() {
+        return this.name;
+    }
 }
 
-export class ConceptInstance implements Meta.Instance {
+export class ConceptInstance extends Meta.Instance {
     public id:string;
+    public values:any;
+    public parent:Concept;
+    public parent_ref:Reference;
 
-    constructor(public concept: Concept, public values: any){
+    constructor(parent: Concept, values: any){
+        var ref = new Reference(parent.getId());
+        super(ref);
+        this.parent = parent;
+        this.values = values;
         this.id = this.getUniqueId();
     }
     
@@ -30,11 +41,16 @@ export class ConceptInstance implements Meta.Instance {
     }
 
     getUniqueId() {
-        return String(this.get(this.concept.unique_id_field));
+        var parent = <Concept> this.parent;
+        return String(this.get(parent.unique_id_field));
     }
 }
 
 export class Reference extends Meta.Reference {
+    //wat
+    constructor(id:string){
+        super(id);
+    }
 }
 
 export class DefinitionStore extends Meta.DefinitionStore {

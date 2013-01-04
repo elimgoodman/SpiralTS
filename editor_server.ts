@@ -8,6 +8,9 @@ import _ = module("underscore")
 
 import Serialization = module("lib/serialization")
 import Concepts = module("lib/concepts")
+import Fields = module("lib/fields")
+import Editors = module("lib/editors")
+import Hydrator = module("lib/hydrator")
 
 var notemplate = require('express-notemplate');
 var ejs = require('ejs');
@@ -34,11 +37,18 @@ app.configure('production', function(){
 
 var project_path = "./sample_project";
 
-var fields = new Serialization.FieldReader(project_path).read();
-var editors = new Serialization.EditorReader(project_path).read();
-var concepts = new Serialization.ConceptReader(project_path).read();
+var fields = <Fields.Store> new Serialization.FieldReader(project_path).read();
+var editors = <Editors.Store> new Serialization.EditorReader(project_path).read();
+var concepts = <Concepts.DefinitionStore> new Serialization.ConceptReader(project_path).read();
+
+//Hydrate all of the references
+var hydrator = new Hydrator.Hydrator(concepts, editors, fields);
+_.each(concepts.getAll(), function(concept){
+    hydrator.hydrateConceptDefition(concept);
+});
 
 var project = new Serialization.ProjectReader(project_path).read();
+hydrator.hydrateProjectInstance(project);
 
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);
@@ -50,7 +60,7 @@ app.get('/', function(req: express.ExpressServerRequest, res: express.ExpressSer
 });
 
 app.get('/concepts', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
-    res.json(project.concepts);
+    res.json(concepts.getAll());
 });
 
 app.get('/actions', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
@@ -68,7 +78,7 @@ app.get('/concepts/:name/instances/:instance_id/editors', function(req: express.
     
     var instance = instances.getById(instance_id);
     
-    var concept = project.getConcept(concept_name);
+    var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function(editor){
         return {
             body: editor.getTemplate(),

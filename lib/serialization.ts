@@ -12,7 +12,7 @@ import Meta = module("meta");
 
 var e = require("jsedn");
 
-function getPathForConceptInstances(project_path:string, concept: Concepts.Concept) {
+function getPathForConceptInstances(project_path:string, concept) {
     return project_path + "/instances/" + concept.name;
 }
 
@@ -132,7 +132,7 @@ export class InstanceReader {
 export class InstanceWriter {
     constructor(public project_path:string){}
     write(instance: Concepts.ConceptInstance) {
-        var path = getPathForConceptInstances(this.project_path, instance.concept);
+        var path = getPathForConceptInstances(this.project_path, instance.parent);
         var filename = this.cleanName(instance.getUniqueId());
         fs.writeFileSync(path + "/" + filename + ".spiral", JSON.stringify(instance.values));
     }

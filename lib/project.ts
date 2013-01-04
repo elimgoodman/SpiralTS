@@ -42,10 +42,11 @@ export class Action {
 export class Project {
 
     private environment = {};
+    public concepts: Concepts.Concept[] = [];
 
     constructor(
         public name: string, 
-        public concepts: Concepts.Concept[], 
+        public concept_refs: Concepts.Reference[], 
         private actions: Action[]){}
 
     performAction(action_name:string) {

@@ -2,6 +2,10 @@ import Meta = module("meta");
 
 export class Field implements Meta.Definition {
     constructor(public type: string){}
+
+    getId() {
+        return this.type;
+    }
 }
 
 export class Instance extends Meta.Instance {

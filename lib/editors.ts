@@ -2,10 +2,16 @@ import Meta = module("meta");
 
 export class Editor implements Meta.Definition {
     constructor(public type: string, public template: string){};
+
+    getId() {
+        return this.type;
+    }
 }
 
-export class Instance implements Meta.Instance {
-    constructor(public editor: Editor, public display_text: string, public value_field: string){}
+export class Instance extends Meta.Instance {
+    constructor(public parent_ref: Reference, public display_text: string, public value_field: string){
+        super(parent_ref);
+    }
 }
 
 export class Store extends Meta.DefinitionStore {

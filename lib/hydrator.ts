@@ -1,13 +1,52 @@
+import Concepts = module("concepts");
+import Editors = module("editors");
+import Fields = module("fields");
+import Project = module("project");
+
 import Meta = module("meta");
 
-class Hydrator {
+import _ = module("underscore");
+
+export class Hydrator {
     constructor(
-        public concept_store: Meta.DefinitionStore,
-        public editor_store: Meta.DefinitionStore,
-        public field_store: Meta.DefinitionStore
+        public concept_store: Concepts.DefinitionStore,
+        public editor_store: Editors.Store,
+        public field_store: Fields.Store
         ){}
 
     private hydrateInstanceParent(instance: Meta.Instance, store: Meta.DefinitionStore):void {
         instance.parent = store.getByReference(instance.parent_ref);
+    }
+
+    public hydrateConceptInstance(instance: Concepts.ConceptInstance) {
+        this.hydrateInstanceParent(instance, this.concept_store);
+    }
+
+    public hydrateEditorInstance(instance: Editors.Instance) {
+        this.hydrateInstanceParent(instance, this.editor_store);
+    }
+
+    public hydrateFieldInstance(instance: Fields.Instance) {
+        this.hydrateInstanceParent(instance, this.field_store);
+    }
+
+    public hydrateConceptDefition(def: Concepts.Concept) {
+        var self = this;
+        _.each(def.editors, function(editor) {
+            self.hydrateEditorInstance(editor);
+        });
+
+        _.each(def.fields, function(field) {
+            self.hydrateFieldInstance(field);
+        });
+    }
+
+    public hydrateProjectInstance(project: Project.Project) {
+        var self = this;
+        var concepts = _.map(project.concept_refs, function(ref) {
+            return self.concept_store.getByReference(ref);
+        });
+
+        project.concepts = concepts;
     }
 }
