@@ -5,12 +5,12 @@
     :editors [
         #spiral/Editor/Instance {
             :editor #spiral/Editor/Reference :url
-            :label "The URL"
+            :label "URL"
             :value_field :url
         }
         #spiral/Editor/Instance {
             :editor #spiral/Editor/Reference :html
-            :label "The Body"
+            :label "Body"
             :value_field :body
         }
     ]

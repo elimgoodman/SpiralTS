@@ -3,21 +3,35 @@
     <head>
         <title>Spiral</title>
         <link rel="stylesheet" type="text/css" href="/css/reset.css">
+        <link rel="stylesheet" type="text/css" href="/css/codemirror.css">
         <link rel="stylesheet" type="text/css" href="/css/index.css">
         <script type="text/javascript" src="/js/jquery.js"></script>
         <script type="text/javascript" src="/js/underscore.js"></script>
         <script type="text/javascript" src="/js/backbone.js"></script>
+        <script type="text/javascript" src="/js/codemirror.js"></script>
+        <script type="text/javascript" src="/js/mode/javascript.js"></script>
+        <script type="text/javascript" src="/js/mode/xml.js"></script>
     </head>
     <body>
         <div id="top-bar">
             <span id="project-name">Project Name</span>
             <ul id="actions"></ul>
             <a href="#" id="save-link">Save</a>
+            |
+            Current Widget:
+            <select id="current-widget">
+                <option value='concept-editor'>Concept Editor</option>
+                <option value='project-editor'>Project Editor</option>
+            </select>
         </div>
         <div id="content">
-            <ul class="entity-list" id="concept-list"></ul>
-            <ul class="entity-list" id="instance-list"></ul>
-            <div id="editors"></div>
+            <div id="concept-editor">
+                <ul class="entity-list" id="concept-list"></ul>
+                <ul class="entity-list" id="instance-list"></ul>
+                <div id="editors"></div>
+            </div>
+            <div id="project-editor">
+            </div>
         </div>
     </body>
     
@@ -34,7 +48,12 @@
     </script>
 
     <script type="text/html" id="editor-list-view">
-        <%= display_text %>: <%= body %>
+        <div class='editor-header'>
+          <%= display_text %> 
+        </div>
+        <div class="editor-body">
+          <%= body %>
+        </div>
     </script>
 
     <script type="text/html" id="action-list-view">

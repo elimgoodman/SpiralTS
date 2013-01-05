@@ -3,6 +3,8 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 }
+var CodeMirror = CodeMirror || {
+};
 var Spiral;
 (function (Spiral) {
     var SelectionKeeper = function () {
@@ -270,10 +272,24 @@ var Spiral;
             });
         };
         EditorListView.prototype.postRender = function () {
-            this.$("input,textarea").unbind('keyup').keyup(_.bind(this.recordChange, this));
+            var self = this;
+            this.$("input,textarea").unbind('keyup').keyup(function (e) {
+                self.recordChange($(e.target).val());
+            });
+            var options = this.model.get('options');
+            if(options.use_codemirror) {
+                var cm = CodeMirror.fromTextArea(this.$("textarea").get(0), _.extend({
+                    lineNumbers: true,
+                    onKeyEvent: function (ed, ev) {
+                        self.recordChange(ed.getValue());
+                    }
+                }, options.codemirror_options));
+                setTimeout(function () {
+                    cm.refresh();
+                }, 20);
+            }
         };
-        EditorListView.prototype.recordChange = function (e) {
-            var new_value = $(e.target).val();
+        EditorListView.prototype.recordChange = function (new_value) {
             var instance = CurrentInstance.get();
             var values = instance.get('values');
             var value_field = this.model.get('value_field');
@@ -459,11 +475,76 @@ var Spiral;
         };
         return SaveLink;
     })(AppView);    
+    var ConceptEditor = (function (_super) {
+        __extends(ConceptEditor, _super);
+        function ConceptEditor() {
+            _super.apply(this, arguments);
+
+        }
+        ConceptEditor.prototype.getElSelector = function () {
+            return "#concept-editor";
+        };
+        ConceptEditor.prototype.show = function () {
+            this.$el.show();
+        };
+        ConceptEditor.prototype.hide = function () {
+            this.$el.hide();
+        };
+        return ConceptEditor;
+    })(AppView);    
+    var ProjectEditor = (function (_super) {
+        __extends(ProjectEditor, _super);
+        function ProjectEditor() {
+            _super.apply(this, arguments);
+
+        }
+        ProjectEditor.prototype.getElSelector = function () {
+            return "#project-editor";
+        };
+        ProjectEditor.prototype.show = function () {
+            this.$el.show();
+        };
+        ProjectEditor.prototype.hide = function () {
+            this.$el.hide();
+        };
+        return ProjectEditor;
+    })(AppView);    
+    var CurrentWidget = (function (_super) {
+        __extends(CurrentWidget, _super);
+        function CurrentWidget() {
+            _super.apply(this, arguments);
+
+        }
+        CurrentWidget.prototype.getElSelector = function () {
+            return "#current-widget";
+        };
+        CurrentWidget.prototype.postInit = function () {
+            this.$el.change(_.bind(this.swapWidget, this));
+        };
+        CurrentWidget.prototype.swapWidget = function (e) {
+            var widget = $(e.target).val();
+            var label_to_view = {
+                'concept-editor': TheConceptEditor,
+                'project-editor': TheProjectEditor
+            };
+            _.each(label_to_view, function (val, key) {
+                if(key == widget) {
+                    val.show();
+                } else {
+                    val.hide();
+                }
+            });
+        };
+        return CurrentWidget;
+    })(AppView);    
     var TheConceptList = new ConceptList();
     var TheInstanceList = new InstanceList();
     var TheEditors = new EditorsList();
     var TheActionList = new ActionList();
     var TheSaveLink = new SaveLink();
+    var TheCurrentWidget = new CurrentWidget();
+    TheProjectEditor = new ProjectEditor();
+    TheConceptEditor = new ConceptEditor();
     Concepts.fetch();
     Actions.fetch();
 })(Spiral || (Spiral = {}));

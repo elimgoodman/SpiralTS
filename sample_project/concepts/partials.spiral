@@ -10,7 +10,7 @@
         }
         #spiral/Editor/Instance {
             :editor #spiral/Editor/Reference :html
-            :label "The Body"
+            :label "Body"
             :value_field :body
         }
     ]

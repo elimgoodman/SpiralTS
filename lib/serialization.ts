@@ -76,8 +76,9 @@ export function setTagActions() {
     e.setTagAction(Tags.EDITOR_DEFINITION, function(obj) {
         var type = e.atPath(obj, "type");
         var template = e.atPath(obj, "template");
+        var options = e.toJS(e.atPath(obj, "options"));
 
-        return new Editors.Editor(type, template);
+        return new Editors.Editor(type, template, options);
     });
 
     e.setTagAction(Tags.EDITOR_INSTANCE, function(obj) {

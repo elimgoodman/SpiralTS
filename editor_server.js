@@ -82,6 +82,7 @@ app.get('/concepts/:name/editors', function (req, res) {
     var templates = _.map(concept.editors, function (editor) {
         return {
             body: editor.parent.template,
+            options: editor.parent.options,
             display_text: editor.display_text,
             value_field: editor.value_field
         };

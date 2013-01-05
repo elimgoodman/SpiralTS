@@ -8,6 +8,7 @@ body {
     padding: 12px;
     color: white;
     background: black;
+    border-bottom: 1px solid white;
 }
 
 #project-name {
@@ -46,7 +47,6 @@ body {
 }
 
 #editors li {
-    padding: 12px;
     border-bottom: 1px solid #ccc;
 }
 
@@ -64,4 +64,27 @@ body {
 #top-bar a {
     color: white;
     /*float: right;*/
+}
+
+.editor-header {
+    background: none repeat scroll 0 0 black;
+    color: white;
+    font-size: 12px;
+    font-variant: small-caps;
+    font-weight: bold;
+    padding: 6px;
+}
+
+.editor-body input {
+    background: none repeat scroll 0 0 #EEEEEE;
+    border: 1px solid #CCCCCC;
+    border-radius: 3px 3px 3px 3px;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 6px;
+    width: 96%;
+}
+
+.editor-body {
+    padding: 9px;
 }

@@ -1,4 +1,10 @@
 #spiral/Editor/Definition {
     :type :html
     :template "<textarea><%= value %></textarea>"
+    :options {
+        :use_codemirror true
+        :codemirror_options {
+            :mode :xml
+        }
+    }
 }

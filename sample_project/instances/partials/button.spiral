@@ -1,7 +1,1 @@
-#spiral/Concept/Instance {
-    :concept #spiral/Concept/Reference :partials
-    :values {
-        :name "button"
-        :body "<span>button</span>"
-    }
-}
+#spiral/Concept/Instance {:concept #spiral/Concept/Reference "partials" :values {:name "button"}}

@@ -1,7 +1,11 @@
 import Meta = module("meta");
 
 export class Editor implements Meta.Definition {
-    constructor(public type: string, public template: string){};
+    constructor(
+        public type: string, 
+        public template: string, 
+        public options: any = {}){
+    };
 
     getId() {
         return this.type;

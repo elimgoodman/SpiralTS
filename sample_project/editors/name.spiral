@@ -1,4 +1,5 @@
 #spiral/Editor/Definition {
     :type :name
     :template "<input value='<%= value %>'/>"
+    :options {}
 }

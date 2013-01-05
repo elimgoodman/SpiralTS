@@ -1,1 +1,4 @@
-#spiral/Concept/Instance {:concept #spiral/Concept/Reference "pages" :values {:url "/bebo" :body "Foobar"}}
+#spiral/Concept/Instance {:concept #spiral/Concept/Reference "pages" :values {:url "/bebo" :body "<h1>
+  Something
+</h1>
+"}}
