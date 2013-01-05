@@ -125,6 +125,14 @@ var Spiral;
         }
         return Action;
     })(Backbone.Model);    
+    var Project = (function (_super) {
+        __extends(Project, _super);
+        function Project() {
+            _super.apply(this, arguments);
+
+        }
+        return Project;
+    })(Backbone.Model);    
     var ConceptCollection = (function (_super) {
         __extends(ConceptCollection, _super);
         function ConceptCollection() {
@@ -547,5 +555,8 @@ var Spiral;
     TheConceptEditor = new ConceptEditor();
     Concepts.fetch();
     Actions.fetch();
+    $.get("/project", function (data) {
+        console.log(data);
+    }, "text");
 })(Spiral || (Spiral = {}));
 

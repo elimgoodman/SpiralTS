@@ -60,12 +60,6 @@ export function setTagActions() {
         return new Project.Fn(params, body, modules);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Module'), function(obj) {
-        var name = e.atPath(obj, "name");
-        var alias = e.atPath(obj, "as");
-
-        return new Project.Module(name, alias);
-    });
 
     e.setTagAction(Tags.FIELD_DEFITION, function(obj) {
         var type = e.atPath(obj, "type");
@@ -238,4 +232,16 @@ export class ProjectReader {
         var txt = fs.readFileSync(path, "utf-8");
         return e.parse(txt);
     }
+}
+
+export function serializeProject(project: Project.Project) {
+    var data = {
+        name: project.name,
+        concepts: _.map(project.concepts, function(concept){
+            return new e.Tagged(Tags.CONCEPT_REFERENCE, concept.getId());
+        })
+    }
+
+    console.log(data);
+    return e.encode(data);
 }

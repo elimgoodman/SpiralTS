@@ -105,6 +105,9 @@ app.post('/actions/:name/perform', function (req, res) {
         succes: true
     });
 });
+app.get('/project', function (req, res) {
+    res.send(Serialization.serializeProject(project));
+});
 app.listen(3000, function () {
     console.log("Listening on port %d in %s mode", 3000, app.settings.env);
 });

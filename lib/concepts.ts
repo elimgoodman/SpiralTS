@@ -50,6 +50,10 @@ export class Reference extends Meta.Reference {
     }
 }
 
+export class InstanceReference {
+    constructor(public parent_name:string, public id:string){}
+}
+
 export class DefinitionStore extends Meta.DefinitionStore {
     getByName(name:string): Concept {
         return _.find(this.defs, function(concept) {

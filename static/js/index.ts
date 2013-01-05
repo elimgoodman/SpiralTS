@@ -88,6 +88,9 @@ module Spiral {
     }
     class Editor extends Backbone.Model {}
     class Action extends Backbone.Model {}
+    class Project extends Backbone.Model {}
+
+    declare var TheProject:Project;
 
     class ConceptCollection extends Backbone.Collection {
         url() {
@@ -462,4 +465,8 @@ module Spiral {
 
     Concepts.fetch();
     Actions.fetch();
+
+    $.get("/project", function(data){
+        console.log(data);
+    }, "text");
 }

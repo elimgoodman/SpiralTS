@@ -139,6 +139,10 @@ app.post('/actions/:name/perform', function(req: express.ExpressServerRequest, r
     res.json({succes: true});
 });
 
+app.get('/project', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    res.send(Serialization.serializeProject(project));
+});
+
 app.listen(3000, function(){
    console.log("Listening on port %d in %s mode", 3000, app.settings.env);
 });
