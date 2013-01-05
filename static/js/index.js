@@ -101,6 +101,10 @@ var Spiral;
             _super.apply(this, arguments);
 
         }
+        Instance.prototype.url = function () {
+            var parent = this.get('parent');
+            return "/concepts/" + parent.name + "/instances";
+        };
         return Instance;
     })(Backbone.Model);    
     var Editor = (function (_super) {
@@ -172,8 +176,7 @@ var Spiral;
         };
         EditorCollection.prototype.url = function () {
             var concept = CurrentConcept.get().get('name');
-            var instance_id = CurrentInstance.get().get('id');
-            return "/concepts/" + concept + "/instances/" + encodeURIComponent(instance_id) + "/editors";
+            return "/concepts/" + concept + "/editors";
         };
         return EditorCollection;
     })(Backbone.Collection);    
@@ -226,6 +229,13 @@ var Spiral;
         InstanceListView.prototype.postRender = function () {
             this.$el.unbind('click').click(_.bind(this.select, this));
             this.setSelectedClass();
+        };
+        InstanceListView.prototype.getTemplateContext = function () {
+            var c = _.extend({
+                is_empty: (this.model.get('id') == "undefined"),
+                id: null
+            }, _super.prototype.getTemplateContext.call(this));
+            return c;
         };
         return InstanceListView;
     })(MView);    
@@ -329,6 +339,28 @@ var Spiral;
         };
         return ConceptList;
     })(AppView);    
+    var AddInstanceButton = (function (_super) {
+        __extends(AddInstanceButton, _super);
+        function AddInstanceButton() {
+            _super.apply(this, arguments);
+
+        }
+        AddInstanceButton.prototype.render = function () {
+            var el = $("<a href='#' class='add-instance'>Add</a>");
+            el.click(function (e) {
+                e.preventDefault();
+                var instance = new Instance({
+                    parent: CurrentConcept.get().toJSON()
+                });
+                instance.save();
+                Instances.push(instance);
+                TheInstanceList.render();
+                CurrentInstance.set(instance);
+            });
+            return el;
+        };
+        return AddInstanceButton;
+    })(Backbone.View);    
     var InstanceList = (function (_super) {
         __extends(InstanceList, _super);
         function InstanceList() {
@@ -351,6 +383,11 @@ var Spiral;
                 });
                 self.$el.append(v.render().el);
             });
+            var v = new AddInstanceButton();
+            var button = v.render();
+            var li = $("<li>");
+            li.append(button);
+            self.$el.append(li);
         };
         return InstanceList;
     })(AppView);    

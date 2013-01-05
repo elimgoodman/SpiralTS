@@ -76,11 +76,33 @@ app.get('/concepts/:name/instances', function(req: express.ExpressServerRequest,
     res.json(instances.getByConceptName(name));
 });
 
-app.get('/concepts/:name/instances/:instance_id/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
-    var concept_name = req.params.name;
-    var instance_id = req.params.instance_id;
+app.post('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var name = req.params.name;
     
-    var instance = instances.getByParentAndId(concept_name, instance_id);
+    var parent_ref = new Concepts.Reference(name);
+    var instance = new Concepts.Instance(parent_ref, {});
+    hydrator.hydrateConceptInstance(instance);
+
+    res.json(instance);
+});
+
+app.put('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var name = req.params.name;
+    
+    var parent_ref = new Concepts.Reference(name);
+    var instance = new Concepts.Instance(parent_ref, {});
+
+    instance.setValues(req.body.values);
+    hydrator.hydrateConceptInstance(instance);
+
+    writer.write(instance);
+    instances.add(instance);
+
+    res.json(instance);
+});
+
+app.get('/concepts/:name/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var concept_name = req.params.name;
     
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function(editor){
@@ -101,6 +123,7 @@ app.put('/concepts/:name/instances/:instance_id', function(req: express.ExpressS
     var instance = instances.getByParentAndId(concept_name, instance_id);
 
     instance.setValues(req.body.values);
+    hydrator.hydrateConceptInstance(instance);
 
     writer.write(instance);
 

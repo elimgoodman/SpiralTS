@@ -79,7 +79,12 @@ module Spiral {
     }
     
     class Concept extends Backbone.Model {}
-    class Instance extends Backbone.Model {}
+    class Instance extends Backbone.Model {
+        url() {
+            var parent = this.get('parent');
+            return "/concepts/" + parent.name + "/instances";
+        }
+    }
     class Editor extends Backbone.Model {}
     class Action extends Backbone.Model {}
 
@@ -118,9 +123,8 @@ module Spiral {
         }
         url() {
             var concept = CurrentConcept.get().get('name');
-            var instance_id = CurrentInstance.get().get('id');
 
-            return "/concepts/" + concept + "/instances/" + encodeURIComponent(instance_id) + "/editors";
+            return "/concepts/" + concept + "/editors";
         }
     }
 
@@ -164,6 +168,14 @@ module Spiral {
         postRender() {
             this.$el.unbind('click').click(_.bind(this.select, this));
             this.setSelectedClass();
+        }
+
+        getTemplateContext() {
+            var c = _.extend({
+                is_empty: (this.model.get('id') == "undefined"),
+                id: null
+            }, super.getTemplateContext());
+            return c;
         }
     }
 
@@ -209,7 +221,6 @@ module Spiral {
             values[value_field] = new_value;
 
             instance.set({values:values}, {silent:true});
-
         }
     }
 
@@ -256,6 +267,27 @@ module Spiral {
         }
     }
 
+    class AddInstanceButton extends Backbone.View {
+        
+        render() {
+            var el = $("<a href='#' class='add-instance'>Add</a>");
+            el.click(function(e) {
+                e.preventDefault();
+
+                var instance = new Instance({
+                    parent: CurrentConcept.get().toJSON()
+                });
+                instance.save();
+
+                Instances.push(instance);
+                TheInstanceList.render();
+
+                CurrentInstance.set(instance);
+            });
+            return el;
+        }
+    }    
+
     class InstanceList extends AppView {
         initialize() {
             super.initialize();
@@ -274,6 +306,13 @@ module Spiral {
                 var v = new InstanceListView({model: m});
                 self.$el.append(v.render().el);
             });
+            
+            //Add an add button
+            var v = new AddInstanceButton();
+            var button = v.render();
+            var li =$("<li>");
+            li.append(button);
+            self.$el.append(li);
         }
     }
 

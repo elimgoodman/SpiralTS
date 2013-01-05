@@ -3,7 +3,7 @@
 var express = require("express")
 var _ = require("underscore")
 var Serialization = require("./lib/serialization")
-
+var Concepts = require("./lib/concepts")
 
 
 var Hydrator = require("./lib/hydrator")
@@ -57,10 +57,27 @@ app.get('/concepts/:name/instances', function (req, res) {
     var name = req.params.name;
     res.json(instances.getByConceptName(name));
 });
-app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
+app.post('/concepts/:name/instances', function (req, res) {
+    var name = req.params.name;
+    var parent_ref = new Concepts.Reference(name);
+    var instance = new Concepts.Instance(parent_ref, {
+    });
+    hydrator.hydrateConceptInstance(instance);
+    res.json(instance);
+});
+app.put('/concepts/:name/instances', function (req, res) {
+    var name = req.params.name;
+    var parent_ref = new Concepts.Reference(name);
+    var instance = new Concepts.Instance(parent_ref, {
+    });
+    instance.setValues(req.body.values);
+    hydrator.hydrateConceptInstance(instance);
+    writer.write(instance);
+    instances.add(instance);
+    res.json(instance);
+});
+app.get('/concepts/:name/editors', function (req, res) {
     var concept_name = req.params.name;
-    var instance_id = req.params.instance_id;
-    var instance = instances.getByParentAndId(concept_name, instance_id);
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function (editor) {
         return {
@@ -76,6 +93,7 @@ app.put('/concepts/:name/instances/:instance_id', function (req, res) {
     var instance_id = req.params.instance_id;
     var instance = instances.getByParentAndId(concept_name, instance_id);
     instance.setValues(req.body.values);
+    hydrator.hydrateConceptInstance(instance);
     writer.write(instance);
     res.json(instance);
 });

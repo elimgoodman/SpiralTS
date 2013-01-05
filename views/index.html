@@ -26,7 +26,11 @@
     </script>
 
     <script type="text/html" id="instance-list-view">
-        <%= id %>
+        <% if (!is_empty) {%>
+            <%= id %>
+        <% } else { %>
+            NEW
+        <% } %>
     </script>
 
     <script type="text/html" id="editor-list-view">
