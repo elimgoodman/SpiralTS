@@ -16,6 +16,20 @@ function getPathForInstances(project_path:string, concept) {
     return project_path + "/instances/" + concept.name;
 }
 
+module Tags {
+    export var CONCEPT_DEFINITION = new e.Tag('spiral', 'Concept', 'Definition');
+    export var CONCEPT_INSTANCE = new e.Tag('spiral', 'Concept', 'Instance');
+    export var CONCEPT_REFERENCE = new e.Tag('spiral', 'Concept', 'Reference');
+
+    export var FIELD_DEFITION = new e.Tag('spiral', 'Field', 'Definition');
+    export var FIELD_INSTANCE = new e.Tag('spiral', 'Field', 'Instance');
+    export var FIELD_REFERENCE = new e.Tag('spiral', 'Field', 'Reference');
+
+    export var EDITOR_DEFINITION = new e.Tag('spiral', 'Editor', 'Definition');
+    export var EDITOR_INSTANCE = new e.Tag('spiral', 'Editor', 'Instance');
+    export var EDITOR_REFERENCE = new e.Tag('spiral', 'Editor', 'Reference');
+}
+
 export function setTagActions() {
     e.setTagAction(new e.Tag('spiral', 'Project', 'Instance'), function(obj) {
         var name = e.atPath(obj, "name");
@@ -25,7 +39,7 @@ export function setTagActions() {
         return new Project.Project(name, concepts, actions);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Concept', 'Reference'), function(concept_name) {
+    e.setTagAction(Tags.CONCEPT_REFERENCE, function(concept_name) {
         return new Concepts.Reference(concept_name);
     });
 
@@ -53,20 +67,20 @@ export function setTagActions() {
         return new Project.Module(name, alias);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Field', 'Definition'), function(obj) {
+    e.setTagAction(Tags.FIELD_DEFITION, function(obj) {
         var type = e.atPath(obj, "type");
 
         return new Fields.Field(type);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Editor', 'Definition'), function(obj) {
+    e.setTagAction(Tags.EDITOR_DEFINITION, function(obj) {
         var type = e.atPath(obj, "type");
         var template = e.atPath(obj, "template");
 
         return new Editors.Editor(type, template);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Editor', 'Instance'), function(obj) {
+    e.setTagAction(Tags.EDITOR_INSTANCE, function(obj) {
         var editor_ref = e.toJS(e.atPath(obj, "editor"));
         var label = e.atPath(obj, "label");
         var value_field = e.atPath(obj, "value_field");
@@ -74,22 +88,22 @@ export function setTagActions() {
         return new Editors.Instance(editor_ref, label, value_field);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Field', 'Instance'), function(obj) {
+    e.setTagAction(Tags.FIELD_INSTANCE, function(obj) {
         var field_ref = e.toJS(e.atPath(obj, "field"));
         var name = e.atPath(obj, "name");
 
         return new Fields.Instance(field_ref, name);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Editor', 'Reference'), function(obj) {
+    e.setTagAction(Tags.EDITOR_REFERENCE, function(obj) {
         return new Editors.Reference(obj);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Field', 'Reference'), function(obj) {
+    e.setTagAction(Tags.FIELD_REFERENCE, function(obj) {
         return new Fields.Reference(obj);
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Concept', 'Definition'), function(obj) {
+    e.setTagAction(Tags.CONCEPT_DEFINITION, function(obj) {
         var name = e.atPath(obj, "name");
         var display_name = e.atPath(obj, "display_name");
         var unique_id_field = e.atPath(obj, "unique_id_field");
@@ -105,7 +119,7 @@ export function setTagActions() {
         );
     });
 
-    e.setTagAction(new e.Tag('spiral', 'Concept', 'Instance'), function(obj) {
+    e.setTagAction(Tags.CONCEPT_INSTANCE, function(obj) {
         var parent_ref = e.atPath(obj, "concept");
         var values = e.toJS(e.atPath(obj, "values"));
 
@@ -142,7 +156,16 @@ export class InstanceWriter {
     write(instance: Concepts.Instance) {
         var path = getPathForInstances(this.project_path, instance.parent);
         var filename = this.cleanName(instance.getUniqueId());
-        fs.writeFileSync(path + "/" + filename + ".spiral", JSON.stringify(instance.values));
+        fs.writeFileSync(path + "/" + filename + ".spiral", this.serialize(instance));
+    }
+    
+    serialize(instance: Concepts.Instance):string {
+        var data = new e.Tagged(Tags.CONCEPT_INSTANCE, {
+            concept: new e.Tagged(Tags.CONCEPT_REFERENCE, instance.parent.getId()),
+            values: instance.values
+        });
+
+        return e.encode(data);
     }
 
     cleanName(name:string): string {

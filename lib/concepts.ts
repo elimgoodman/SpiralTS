@@ -67,9 +67,10 @@ export class InstanceStore {
         });
     }
 
-    getById(instance_id:string): Instance {
+    getByParentAndId(parent_name: string, instance_id:string): Instance {
         return _.find(this.instances, function(instance) {
-            return instance.id == instance_id;
+            return (instance.id == instance_id) 
+                && (instance.parent.name == parent_name);
         });
     }
 

@@ -60,7 +60,7 @@ app.get('/concepts/:name/instances', function (req, res) {
 app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
-    var instance = instances.getById(instance_id);
+    var instance = instances.getByParentAndId(concept_name, instance_id);
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function (editor) {
         return {
@@ -74,7 +74,7 @@ app.get('/concepts/:name/instances/:instance_id/editors', function (req, res) {
 app.put('/concepts/:name/instances/:instance_id', function (req, res) {
     var concept_name = req.params.name;
     var instance_id = req.params.instance_id;
-    var instance = instances.getById(instance_id);
+    var instance = instances.getByParentAndId(concept_name, instance_id);
     instance.setValues(req.body.values);
     writer.write(instance);
     res.json(instance);
