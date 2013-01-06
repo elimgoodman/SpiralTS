@@ -1,0 +1,11 @@
+#spiral/Editor/Definition {
+    :type :code_block
+    :template "<textarea><%= value %></textarea>"
+    :options {
+        :use_codemirror true
+        :codemirror_options {
+            :mode :javascript
+        }
+    }
+}
+

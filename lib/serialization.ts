@@ -17,6 +17,10 @@ function getPathForInstances(project_path:string, concept) {
 }
 
 module Tags {
+    export var PROJECT = new e.Tag('spiral', 'Project');
+    export var PROJECT_ACTION = new e.Tag('spiral', 'Project', 'Action');
+    export var CODE_BLOCK = new e.Tag('spiral', 'CodeBlock');
+
     export var CONCEPT_DEFINITION = new e.Tag('spiral', 'Concept', 'Definition');
     export var CONCEPT_INSTANCE = new e.Tag('spiral', 'Concept', 'Instance');
     export var CONCEPT_REFERENCE = new e.Tag('spiral', 'Concept', 'Reference');
@@ -31,7 +35,7 @@ module Tags {
 }
 
 export function setTagActions() {
-    e.setTagAction(new e.Tag('spiral', 'Project', 'Instance'), function(obj) {
+    e.setTagAction(Tags.PROJECT, function(obj) {
         var name = e.atPath(obj, "name");
         var concepts = e.toJS(e.atPath(obj, "concepts"));
         var actions = e.toJS(e.atPath(obj, "actions"));
@@ -39,27 +43,25 @@ export function setTagActions() {
         return new Project.Project(name, concepts, actions);
     });
 
+    e.setTagAction(Tags.PROJECT_ACTION, function(obj) {
+        var name = e.atPath(obj, "name");
+        var display_name = e.atPath(obj, "display_name");
+        var code = e.toJS(e.atPath(obj, "code"));
+        var is_valid = e.toJS(e.atPath(obj, "is_valid"));
+
+        return new Project.Action(name, display_name, code, is_valid);
+    });
+
+    e.setTagAction(Tags.CODE_BLOCK, function(obj) {
+        var params = e.toJS(e.atPath(obj, "params"));
+        var body = e.atPath(obj, 'body');
+
+        return new Project.CodeBlock(params, body);
+    });
+
     e.setTagAction(Tags.CONCEPT_REFERENCE, function(concept_name) {
         return new Concepts.Reference(concept_name);
     });
-
-    e.setTagAction(new e.Tag('spiral', 'Action', 'Instance'), function(obj) {
-        var name = e.atPath(obj, "name");
-        var display_name = e.atPath(obj, "display_name");
-        var body = e.atPath(obj, "body");
-        var isValid = e.atPath(obj, "isValid");
-
-        return new Project.Action(name, display_name, body, isValid);
-    });
-
-    e.setTagAction(new e.Tag('spiral', 'Fn', "Instance"), function(obj) {
-        var params = e.toJS(e.atPath(obj, "params"));
-        var modules = e.toJS(e.atPath(obj, "modules"));
-        var body = e.atPath(obj, "body");
-
-        return new Project.Fn(params, body, modules);
-    });
-
 
     e.setTagAction(Tags.FIELD_DEFITION, function(obj) {
         var type = e.atPath(obj, "type");
@@ -234,14 +236,30 @@ export class ProjectReader {
     }
 }
 
-export function serializeProject(project: Project.Project) {
-    var data = {
-        name: project.name,
-        concepts: _.map(project.concepts, function(concept){
-            return new e.Tagged(Tags.CONCEPT_REFERENCE, concept.getId());
-        })
-    }
+function serializeCodeBlock(code: Project.CodeBlock) {
+    return new e.Tagged(Tags.CODE_BLOCK, {
+        params: code.params,
+        body: code.body
+    });
+}
 
-    console.log(data);
+function serializeAction(action: Project.Action) {
+    return new e.Tagged(Tags.PROJECT_ACTION, {
+        name: action.name,
+        display_name: action.display_name,
+        code: serializeCodeBlock(action.code),
+        is_valid: serializeCodeBlock(action.isValid)
+    });
+}
+
+export function serializeProject(project: Project.Project) {
+    var data = new e.Tagged(Tags.PROJECT, {
+        name: project.name,
+        concepts: _.map(project.concept_refs, function(concept){
+            return new e.Tagged(Tags.CONCEPT_REFERENCE, concept.id);
+        }),
+        actions: _.map(project.actions, serializeAction)
+    });
+
     return e.encode(data);
 }

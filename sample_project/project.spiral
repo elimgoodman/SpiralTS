@@ -1,35 +1,20 @@
-#spiral/Project/Instance {
+#spiral/Project {
     :name "My Project",
     :concepts [
         #spiral/Concept/Reference :pages, 
         #spiral/Concept/Reference :partials
     ],
     :actions [
-        #spiral/Action/Instance {
+        #spiral/Project/Action {
             :name "run",
             :display_name "Run"
-            :body #spiral/Fn/Instance {
+            :code #spiral/CodeBlock {
                 :params ["environment"]
-                :modules [
-                    #spiral/Module {
-                        :name "underscore"
-                        :as "_"
-                    }
-                    #spiral/Module {
-                        :name "director"
-                        :as "director"
-                    }
-                    #spiral/Module {
-                        :name "http"
-                        :as "http"
-                    }
-                ]
                 :body "console.log('running');"
             },
-            :isValid #spiral/Fn/Instance {
+            :is_valid #spiral/CodeBlock {
                 :params ["environment"]
                 :body "return true;"
-                :modules []
             }
         }
     ]

@@ -48,11 +48,15 @@ _.each(concepts.getAll(), function(concept){
 });
 
 var project = new Serialization.ProjectReader(project_path).read();
-hydrator.hydrateProjectInstance(project);
 
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);
-var instances = <Concepts.InstanceStore> reader.read(project.concepts);
+
+var project_concepts = _.map(project.concept_refs, function(ref){
+    return concepts.getByReference(ref);
+});
+
+var instances = <Concepts.InstanceStore> reader.read(project_concepts);
 
 _.each(instances.getAll(), function(instance){
     hydrator.hydrateConceptInstance(instance);
@@ -68,7 +72,7 @@ app.get('/concepts', function(req: express.ExpressServerRequest, res: express.Ex
 });
 
 app.get('/actions', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
-    res.json(project.getActions());
+    res.json(project.actions);
 });
 
 app.get('/concepts/:name/instances', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
@@ -134,7 +138,7 @@ app.put('/concepts/:name/instances/:instance_id', function(req: express.ExpressS
 app.post('/actions/:name/perform', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     var name = req.params.name;
 
-    project.performAction(name);
+    //project.performAction(name);
 
     res.json({succes: true});
 });

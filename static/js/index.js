@@ -5,6 +5,8 @@ var __extends = this.__extends || function (d, b) {
 }
 var CodeMirror = CodeMirror || {
 };
+var edn = edn || {
+};
 var Spiral;
 (function (Spiral) {
     var SelectionKeeper = function () {
@@ -132,6 +134,14 @@ var Spiral;
 
         }
         return Project;
+    })(Backbone.Model);    
+    var CodeBlock = (function (_super) {
+        __extends(CodeBlock, _super);
+        function CodeBlock() {
+            _super.apply(this, arguments);
+
+        }
+        return CodeBlock;
     })(Backbone.Model);    
     var ConceptCollection = (function (_super) {
         __extends(ConceptCollection, _super);
@@ -555,8 +565,25 @@ var Spiral;
     TheConceptEditor = new ConceptEditor();
     Concepts.fetch();
     Actions.fetch();
-    $.get("/project", function (data) {
-        console.log(data);
-    }, "text");
+    edn.setTagAction(new edn.Tag('spiral', 'Project'), function (obj) {
+        return new Project(edn.toJS(obj));
+    });
+    edn.setTagAction(new edn.Tag('spiral', 'Project', 'Action'), function (obj) {
+        return new Action(edn.toJS(obj));
+    });
+    edn.setTagAction(new edn.Tag('spiral', 'CodeBlock'), function (obj) {
+        return new CodeBlock(edn.toJS(obj));
+    });
+    edn.setTagAction(new edn.Tag('spiral', 'Concept', 'Reference'), function (obj) {
+        return Concepts.find(function (concept) {
+            return concept.get("name") == obj;
+        });
+    });
+    Concepts.bind('reset', function () {
+        $.get("/project", function (data) {
+            var project = edn.toJS(edn.parse(data));
+            TheProject = project;
+        }, "text");
+    });
 })(Spiral || (Spiral = {}));
 

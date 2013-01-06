@@ -24,6 +24,7 @@ declare module Backbone {
        filter(f: (elem: any) => any): Collection;
        without(...values: any[]): Collection;
        push(elem:any): void;
+       find(f: (elem: any) => bool ): void;
    }
    export class View {
        constructor (options? );

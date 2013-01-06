@@ -36,10 +36,12 @@ _.each(concepts.getAll(), function (concept) {
     hydrator.hydrateConceptDefition(concept);
 });
 var project = new Serialization.ProjectReader(project_path).read();
-hydrator.hydrateProjectInstance(project);
 var reader = new Serialization.InstanceReader(project_path);
 var writer = new Serialization.InstanceWriter(project_path);
-var instances = reader.read(project.concepts);
+var project_concepts = _.map(project.concept_refs, function (ref) {
+    return concepts.getByReference(ref);
+});
+var instances = reader.read(project_concepts);
 _.each(instances.getAll(), function (instance) {
     hydrator.hydrateConceptInstance(instance);
 });
@@ -51,7 +53,7 @@ app.get('/concepts', function (req, res) {
     res.json(concepts.getAll());
 });
 app.get('/actions', function (req, res) {
-    res.json(project.getActions());
+    res.json(project.actions);
 });
 app.get('/concepts/:name/instances', function (req, res) {
     var name = req.params.name;
@@ -100,7 +102,6 @@ app.put('/concepts/:name/instances/:instance_id', function (req, res) {
 });
 app.post('/actions/:name/perform', function (req, res) {
     var name = req.params.name;
-    project.performAction(name);
     res.json({
         succes: true
     });

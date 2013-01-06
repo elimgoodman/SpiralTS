@@ -42,15 +42,6 @@ export class Hydrator {
         });
     }
 
-    public hydrateProjectInstance(project: Project.Project) {
-        var self = this;
-        var concepts = _.map(project.concept_refs, function(ref) {
-            return self.concept_store.getByReference(ref);
-        });
-
-        project.concepts = concepts;
-    }
-
     public hydrateConceptInstance(instance: Concepts.Instance) {
         this.hydrateInstanceParent(instance, this.concept_store);
     }
