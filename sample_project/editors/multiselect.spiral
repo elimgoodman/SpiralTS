@@ -1,0 +1,14 @@
+#spiral/Editor/Definition {
+    :type :multiselect
+    :template "
+    <table>
+        <% _.each(options, function(option){ %>
+            <tr>
+                <td><%= option.display_name %></td>
+                <td><input type='checkbox' <% if (_.contains(value, option.name)) { %>checked='checked'/> <% } %></td>
+            </tr>
+        <% }); %>
+    </table>"
+    :options {}
+}
+

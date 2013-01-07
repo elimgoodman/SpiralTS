@@ -5,8 +5,10 @@ var _ = require("underscore")
 var Serialization = require("./lib/serialization")
 var Concepts = require("./lib/concepts")
 
-
+var Editors = require("./lib/editors")
 var Hydrator = require("./lib/hydrator")
+
+var Globals = require("./lib/globals")
 var notemplate = require('express-notemplate');
 var ejs = require('ejs');
 var app = express.createServer();
@@ -31,6 +33,8 @@ var project_path = "./sample_project";
 var fields = new Serialization.FieldReader(project_path).read();
 var editors = new Serialization.EditorReader(project_path).read();
 var concepts = new Serialization.ConceptReader(project_path).read();
+var globals = new Globals.Globals();
+globals.set('concepts', concepts);
 var hydrator = new Hydrator.Hydrator(concepts, editors, fields);
 _.each(concepts.getAll(), function (concept) {
     hydrator.hydrateConceptDefition(concept);
@@ -82,12 +86,7 @@ app.get('/concepts/:name/editors', function (req, res) {
     var concept_name = req.params.name;
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function (editor) {
-        return {
-            body: editor.parent.template,
-            options: editor.parent.options,
-            display_text: editor.display_text,
-            value_field: editor.value_field
-        };
+        return editor.toDict(globals);
     });
     res.json(templates);
 });
@@ -108,6 +107,20 @@ app.post('/actions/:name/perform', function (req, res) {
 });
 app.get('/project', function (req, res) {
     res.send(Serialization.serializeProject(project));
+});
+app.get('/project/editors', function (req, res) {
+    var editors = [
+        new Editors.Instance(new Editors.Reference('name'), 'Project Name', 'name', {
+        }), 
+        new Editors.Instance(new Editors.Reference('multiselect'), 'Concepts', 'concepts', {
+            options: "return globals.get('concepts').getAll();"
+        })
+    ];
+    editors = _.map(editors, function (editor) {
+        hydrator.hydrateEditorInstance(editor);
+        return editor.toDict(globals);
+    });
+    res.json(editors);
 });
 app.listen(3000, function () {
     console.log("Listening on port %d in %s mode", 3000, app.settings.env);

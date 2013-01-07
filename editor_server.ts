@@ -11,6 +11,8 @@ import Concepts = module("lib/concepts")
 import Fields = module("lib/fields")
 import Editors = module("lib/editors")
 import Hydrator = module("lib/hydrator")
+import Project = module("lib/project")
+import Globals = module("lib/globals")
 
 var notemplate = require('express-notemplate');
 var ejs = require('ejs');
@@ -40,6 +42,9 @@ var project_path = "./sample_project";
 var fields = <Fields.Store> new Serialization.FieldReader(project_path).read();
 var editors = <Editors.Store> new Serialization.EditorReader(project_path).read();
 var concepts = <Concepts.DefinitionStore> new Serialization.ConceptReader(project_path).read();
+
+var globals = new Globals.Globals();
+globals.set('concepts', concepts);
 
 //Hydrate all of the references
 var hydrator = new Hydrator.Hydrator(concepts, editors, fields);
@@ -110,12 +115,7 @@ app.get('/concepts/:name/editors', function(req: express.ExpressServerRequest, r
     
     var concept = concepts.getByName(concept_name);
     var templates = _.map(concept.editors, function(editor){
-        return {
-            body: editor.parent.template,
-            options: editor.parent.options,
-            display_text: editor.display_text,
-            value_field: editor.value_field
-        };
+        return editor.toDict(globals);
     });
 
     res.json(templates);
@@ -145,6 +145,28 @@ app.post('/actions/:name/perform', function(req: express.ExpressServerRequest, r
 
 app.get('/project', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
     res.send(Serialization.serializeProject(project));
+});
+
+app.get('/project/editors', function(req: express.ExpressServerRequest, res: express.ExpressServerResponse) {
+    var editors = [
+        new Editors.Instance(
+            new Editors.Reference('name'), 
+            'Project Name', 
+            'name',
+            {}),
+        new Editors.Instance(
+            new Editors.Reference('multiselect'), 
+            'Concepts', 
+            'concepts',
+            {options: "return globals.get('concepts').getAll();"})
+    ];
+
+    editors = _.map(editors, function(editor){
+        hydrator.hydrateEditorInstance(editor);
+        return editor.toDict(globals);
+    });
+
+    res.json(editors);
 });
 
 app.listen(3000, function(){

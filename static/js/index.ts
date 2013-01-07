@@ -134,9 +134,17 @@ module Spiral {
         }
     }
 
+    class ProjectEditorCollection extends Backbone.Collection {
+        public model = Editor;
+        url() {
+            return "/project/editors";
+        }
+    }
+
     var Concepts = new ConceptCollection();
     var Instances = new InstanceCollection();
     var Editors = new EditorCollection();
+    var ProjectEditors = new ProjectEditorCollection();
     var Actions = new ActionCollection();
 
     class ConceptListView extends MView {
@@ -202,15 +210,22 @@ module Spiral {
             });
         }
 
-        populateTemplate() {
-            var template = this.model.get('body');
-
+        getEditorTemplateContext():any {
+        
             var instance = CurrentInstance.get();
             var values = instance.get('values');
 
             var value = values[this.model.get('value_field')];
 
-            return _.template(template)({value: value});
+            return {value: value};
+        }
+
+        populateTemplate() {
+            var template = this.model.get('body');
+
+            var context = this.getEditorTemplateContext();
+
+            return _.template(template)(context);
         }
 
         postRender() {
@@ -243,6 +258,21 @@ module Spiral {
             values[value_field] = new_value;
 
             instance.set({values:values}, {silent:true});
+        }
+    }
+
+    class ProjectEditorListView extends EditorListView {
+        getEditorTemplateContext():any {
+            var context = this.model.get('context');
+
+            var value_field = this.model.get('value_field');
+            var value = TheProject.get(value_field);
+
+            return _.extend(context, {value: value});
+        }
+
+        recordChange(new_value) {
+            console.log("noop");
         }
     }
 
@@ -410,8 +440,14 @@ module Spiral {
             this.$el.hide();
         }
     }  
-
+    
     class ProjectEditor extends AppView {
+        private editor_list;
+
+        initialize() {
+            super.initialize();
+            this.editor_list = this.$("#project-editor-list");
+        }
 
         getElSelector() {
             return "#project-editor";
@@ -423,6 +459,16 @@ module Spiral {
 
         hide() {
             this.$el.hide();
+        }
+
+        render() {
+            this.editor_list.empty();
+
+            var self = this;
+            ProjectEditors.each(function(m){
+                var v = new ProjectEditorListView({model: m});
+                self.editor_list.append(v.render().el);
+            });
         }
     }  
 
@@ -467,6 +513,7 @@ module Spiral {
 
     Concepts.fetch();
     Actions.fetch();
+    ProjectEditors.fetch();
     
     //PARSING STUFF
     edn.setTagAction(new edn.Tag('spiral', 'Project'), function(obj){
@@ -482,15 +529,14 @@ module Spiral {
     });    
 
     edn.setTagAction(new edn.Tag('spiral', 'Concept', 'Reference'), function(obj){
-        return Concepts.find(function(concept){
-            return concept.get("name") == obj;
-        });
+        return obj;
     });
 
     Concepts.bind('reset', function(){
         $.get("/project", function(data){
             var project = edn.toJS(edn.parse(data));
             TheProject = project;
+            TheProjectEditor.render();
         }, "text");
     });
 }

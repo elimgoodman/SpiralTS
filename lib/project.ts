@@ -2,6 +2,7 @@
 
 import _ = module("underscore");
 import Concepts = module("concepts");
+import Editors = module("editors");
 
 export class CodeBlock {
     constructor(public params:string[], public body:string){}

@@ -88,3 +88,7 @@ body {
 .editor-body {
     padding: 9px;
 }
+
+#project-editor {
+    display: none;
+}

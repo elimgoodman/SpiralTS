@@ -200,9 +200,22 @@ var Spiral;
         };
         return EditorCollection;
     })(Backbone.Collection);    
+    var ProjectEditorCollection = (function (_super) {
+        __extends(ProjectEditorCollection, _super);
+        function ProjectEditorCollection() {
+            _super.apply(this, arguments);
+
+            this.model = Editor;
+        }
+        ProjectEditorCollection.prototype.url = function () {
+            return "/project/editors";
+        };
+        return ProjectEditorCollection;
+    })(Backbone.Collection);    
     var Concepts = new ConceptCollection();
     var Instances = new InstanceCollection();
     var Editors = new EditorCollection();
+    var ProjectEditors = new ProjectEditorCollection();
     var Actions = new ActionCollection();
     var ConceptListView = (function (_super) {
         __extends(ConceptListView, _super);
@@ -280,14 +293,18 @@ var Spiral;
                 body: this.populateTemplate()
             });
         };
-        EditorListView.prototype.populateTemplate = function () {
-            var template = this.model.get('body');
+        EditorListView.prototype.getEditorTemplateContext = function () {
             var instance = CurrentInstance.get();
             var values = instance.get('values');
             var value = values[this.model.get('value_field')];
-            return _.template(template)({
+            return {
                 value: value
-            });
+            };
+        };
+        EditorListView.prototype.populateTemplate = function () {
+            var template = this.model.get('body');
+            var context = this.getEditorTemplateContext();
+            return _.template(template)(context);
         };
         EditorListView.prototype.postRender = function () {
             var self = this;
@@ -320,6 +337,25 @@ var Spiral;
         };
         return EditorListView;
     })(MView);    
+    var ProjectEditorListView = (function (_super) {
+        __extends(ProjectEditorListView, _super);
+        function ProjectEditorListView() {
+            _super.apply(this, arguments);
+
+        }
+        ProjectEditorListView.prototype.getEditorTemplateContext = function () {
+            var context = this.model.get('context');
+            var value_field = this.model.get('value_field');
+            var value = TheProject.get(value_field);
+            return _.extend(context, {
+                value: value
+            });
+        };
+        ProjectEditorListView.prototype.recordChange = function (new_value) {
+            console.log("noop");
+        };
+        return ProjectEditorListView;
+    })(EditorListView);    
     var ActionListView = (function (_super) {
         __extends(ActionListView, _super);
         function ActionListView() {
@@ -516,6 +552,10 @@ var Spiral;
             _super.apply(this, arguments);
 
         }
+        ProjectEditor.prototype.initialize = function () {
+            _super.prototype.initialize.call(this);
+            this.editor_list = this.$("#project-editor-list");
+        };
         ProjectEditor.prototype.getElSelector = function () {
             return "#project-editor";
         };
@@ -524,6 +564,16 @@ var Spiral;
         };
         ProjectEditor.prototype.hide = function () {
             this.$el.hide();
+        };
+        ProjectEditor.prototype.render = function () {
+            this.editor_list.empty();
+            var self = this;
+            ProjectEditors.each(function (m) {
+                var v = new ProjectEditorListView({
+                    model: m
+                });
+                self.editor_list.append(v.render().el);
+            });
         };
         return ProjectEditor;
     })(AppView);    
@@ -565,6 +615,7 @@ var Spiral;
     TheConceptEditor = new ConceptEditor();
     Concepts.fetch();
     Actions.fetch();
+    ProjectEditors.fetch();
     edn.setTagAction(new edn.Tag('spiral', 'Project'), function (obj) {
         return new Project(edn.toJS(obj));
     });
@@ -575,14 +626,13 @@ var Spiral;
         return new CodeBlock(edn.toJS(obj));
     });
     edn.setTagAction(new edn.Tag('spiral', 'Concept', 'Reference'), function (obj) {
-        return Concepts.find(function (concept) {
-            return concept.get("name") == obj;
-        });
+        return obj;
     });
     Concepts.bind('reset', function () {
         $.get("/project", function (data) {
             var project = edn.toJS(edn.parse(data));
             TheProject = project;
+            TheProjectEditor.render();
         }, "text");
     });
 })(Spiral || (Spiral = {}));
