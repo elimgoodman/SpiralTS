@@ -255,9 +255,7 @@ function serializeAction(action: Project.Action) {
 export function serializeProject(project: Project.Project) {
     var data = new e.Tagged(Tags.PROJECT, {
         name: project.name,
-        concepts: _.map(project.concept_refs, function(concept){
-            return new e.Tagged(Tags.CONCEPT_REFERENCE, concept.id);
-        }),
+        concepts: _.pluck(project.concept_refs, 'id'),
         actions: _.map(project.actions, serializeAction)
     });
 

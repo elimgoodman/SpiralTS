@@ -109,12 +109,21 @@ app.get('/project', function (req, res) {
     res.send(Serialization.serializeProject(project));
 });
 app.get('/project/editors', function (req, res) {
-    var editors = [
-        new Editors.Instance(new Editors.Reference('name'), 'Project Name', 'name', {
+    var name = new Editors.Instance(new Editors.Reference('name'), 'Project Name', 'name', {
+    });
+    var concepts = new Editors.Instance(new Editors.Reference('multiselect'), 'Concepts', 'concepts', {
+        options: "return globals.get('concepts').getAll();"
+    });
+    var actions = new Editors.CompoundEditor("actions", [
+        new Editors.Instance(new Editors.Reference('name'), 'Name', 'name', {
         }), 
-        new Editors.Instance(new Editors.Reference('multiselect'), 'Concepts', 'concepts', {
-            options: "return globals.get('concepts').getAll();"
+        new Editors.Instance(new Editors.Reference('name'), 'Display Name', 'display_name', {
         })
+    ]);
+    var editors = [
+        name, 
+        concepts, 
+        actions
     ];
     editors = _.map(editors, function (editor) {
         hydrator.hydrateEditorInstance(editor);

@@ -528,10 +528,6 @@ module Spiral {
         return new CodeBlock(edn.toJS(obj));
     });    
 
-    edn.setTagAction(new edn.Tag('spiral', 'Concept', 'Reference'), function(obj){
-        return obj;
-    });
-
     Concepts.bind('reset', function(){
         $.get("/project", function(data){
             var project = edn.toJS(edn.parse(data));

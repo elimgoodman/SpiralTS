@@ -14,6 +14,10 @@ export class Editor implements Meta.Definition {
     }
 }
 
+export class CompoundEditor {
+    constructor(value_field:string, instances:Instance[]){};
+}
+
 export class Instance extends Meta.Instance {
     constructor(
         public parent_ref: Reference, 
